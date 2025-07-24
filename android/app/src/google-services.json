@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "189759224181",
+    "project_id": "hackathonproject-fbf26",
+    "storage_bucket": "hackathonproject-fbf26.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:189759224181:android:70d74a594cb77a6041fb3c",
+        "android_client_info": {
+          "package_name": "com.example.temp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "189759224181-2gcp5lh5opqbdqe71d4fu8bg1nntlf4r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.temp",
+            "certificate_hash": "a887e5ea80ba03569d8ee4b63ae9c68b11c8a6c5"
+          }
+        },
+        {
+          "client_id": "189759224181-a2ssq1oaruse1vgfgv9l97mqu2lpu37e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDja7kwLYDby31agYCvf-l_Qu2xgV-P9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "189759224181-a2ssq1oaruse1vgfgv9l97mqu2lpu37e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
