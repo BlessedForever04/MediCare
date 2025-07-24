@@ -72,11 +72,11 @@ class _MyAppState extends State<register_page> {
         ),
         leading: GestureDetector(
           onTap: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (context) => login()));
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => login()),
+              (Route<dynamic> route) => false,
+            );
           },
-
           child: Icon(CupertinoIcons.back, color: Colors.white),
         ),
       ),
@@ -148,9 +148,7 @@ class _MyAppState extends State<register_page> {
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadiusGeometry.circular(
-                                    10,
-                                  ),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
 
@@ -167,6 +165,13 @@ class _MyAppState extends State<register_page> {
                                   );
                                 } else {
                                   register();
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => login(),
+                                    ),
+                                    (Route<dynamic> route) => false,
+                                  );
                                 }
                               },
                               child: Text(

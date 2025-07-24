@@ -1,6 +1,12 @@
+// ignore_for_file: unused_import, strict_top_level_inference
+
 import 'package:flutter/material.dart';
+import 'package:temp/pages/dashboard.dart';
 import 'package:temp/pages/register.dart';
 import 'package:temp/main.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui' as ui;
 
 class login extends StatefulWidget {
@@ -195,13 +201,33 @@ Widget signinButton(var f1, var f2) {
       child: Builder(
         builder: (BuildContext context) {
           return OutlinedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               String userName = f1.text.trim();
               String password = f2.text.trim();
 
               if (userName.isEmpty || password.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text("Enter all credentials")),
+                );
+                return;
+              }
+
+              try {
+                // ✅ Firebase login
+                await FirebaseAuth.instance.signInWithEmailAndPassword(
+                  email: userName,
+                  password: password,
+                );
+
+                // ✅ Navigate to dashboard on success
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const dashboard()),
+                  (Route<dynamic> route) => false,
+                );
+              } on FirebaseAuthException catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.message ?? "Login failed")),
                 );
               }
             },
@@ -214,6 +240,7 @@ Widget signinButton(var f1, var f2) {
               "Sign in",
               style: TextStyle(fontSize: 24, color: Theme_color),
             ),
+            icon: Icon(Icons.login, color: Theme_color),
           );
         },
       ),
