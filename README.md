@@ -52,10 +52,5 @@
 - Android Studio or VS Code
 - Firebase CLI (for deployment if needed)
 
-### 2️⃣ Clone the Repository
-bash
-git clone https://github.com/yourusername/mediconnect.git
-cd mediconnect
-
 Install Dependencies:
 flutter pub get
