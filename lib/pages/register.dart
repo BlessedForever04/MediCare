@@ -18,7 +18,11 @@ class _MyAppState extends State<register_page> {
   TextEditingController mail = TextEditingController();
   TextEditingController password = TextEditingController();
   TextEditingController confirmpass = TextEditingController();
+  TextEditingController registrationNumber = TextEditingController();
   String error = "";
+  bool isDoctor = false;
+  double elevationP = 0;
+  double elevationd = 10;
 
   Future<void> register() async {
     if (password.text.trim() != confirmpass.text.trim()) {
@@ -27,25 +31,39 @@ class _MyAppState extends State<register_page> {
     }
 
     try {
-      // 1. Create Firebase Auth user
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: mail.text.trim(),
             password: password.text.trim(),
           );
 
-      // 2. Save additional details to Firestore
+      String uid = userCredential.user!.uid;
+
+      Map<String, dynamic> userData = {
+        'first_name': firstName.text.trim(),
+        'last_name': lastName.text.trim(),
+        'email': mail.text.trim(),
+        'role': isDoctor ? 'doctor' : 'patient',
+        'created_at': FieldValue.serverTimestamp(),
+      };
+
+      if (isDoctor) {
+        userData['registration_number'] = registrationNumber.text.trim();
+      }
+
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-            'first_name': firstName.text.trim(),
-            'last_name': lastName.text.trim(),
-            'email': mail.text.trim(),
-            'created_at': FieldValue.serverTimestamp(),
-          });
+          .doc(uid)
+          .set(userData);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("User registered successfully!")));
     } on FirebaseAuthException catch (e) {
       setState(() => error = e.message ?? "Something went wrong");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.message}")));
     }
   }
 
@@ -111,13 +129,64 @@ class _MyAppState extends State<register_page> {
                                 ),
                               ),
                               child: Center(
-                                child: Text(
-                                  "Registration Details",
-                                  style: TextStyle(
-                                    fontSize: 25,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      "You are -",
+                                      style: TextStyle(
+                                        fontSize: 25,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            elevation: elevationP,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              elevationP = 0;
+                                              elevationd = 5;
+                                              isDoctor = false;
+                                            });
+                                          },
+                                          child: Text(
+                                            "Patient",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            elevation: elevationd,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              elevationP = 5;
+                                              elevationd = 0;
+                                              isDoctor = true;
+                                            });
+                                          },
+                                          child: Text(
+                                            "Doctor",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -127,6 +196,13 @@ class _MyAppState extends State<register_page> {
                       userInput(firstName, "First name", false),
                       userInput(lastName, "Last name", false),
                       userInput(mail, "Mail", false),
+                      if (isDoctor)
+                        userInput(
+                          registrationNumber,
+                          "Registration Number",
+                          false,
+                        ),
+
                       userInput(password, "Password", true),
                       userInput(confirmpass, "Confirm Password", true),
                       SizedBox(
@@ -164,14 +240,25 @@ class _MyAppState extends State<register_page> {
                                     ),
                                   );
                                 } else {
-                                  register();
-                                  Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => login(),
-                                    ),
-                                    (Route<dynamic> route) => false,
-                                  );
+                                  if (password.text.trim() !=
+                                      confirmpass.text.trim()) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          "Password does not match!",
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    register();
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => login(),
+                                      ),
+                                      (Route<dynamic> route) => false,
+                                    );
+                                  }
                                 }
                               },
                               child: Text(

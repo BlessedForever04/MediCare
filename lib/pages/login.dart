@@ -1,13 +1,19 @@
 // ignore_for_file: unused_import, strict_top_level_inference
 
 import 'package:flutter/material.dart';
-import 'package:temp/pages/dashboard.dart';
+import 'package:temp/pages/doctor_home_page.dart';
+import 'package:temp/pages/doctor_main_navigation.dart';
+import 'package:temp/pages/patient_details_page.dart';
+import 'package:temp/pages/patient_home_page.dart';
+import 'package:temp/pages/patient_main_navigation.dart';
 import 'package:temp/pages/register.dart';
 import 'package:temp/main.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui' as ui;
+
+import 'package:temp/pages/splash.dart';
 
 class login extends StatefulWidget {
   const login({super.key});
@@ -202,35 +208,64 @@ Widget signinButton(var f1, var f2) {
         builder: (BuildContext context) {
           return OutlinedButton.icon(
             onPressed: () async {
-              String userName = f1.text.trim();
-              String password = f2.text.trim();
+  String userName = f1.text.trim();
+  String password = f2.text.trim();
 
-              if (userName.isEmpty || password.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Enter all credentials")),
-                );
-                return;
-              }
+  if (userName.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Enter all credentials")),
+    );
+    return;
+  }
 
-              try {
-                // ✅ Firebase login
-                await FirebaseAuth.instance.signInWithEmailAndPassword(
-                  email: userName,
-                  password: password,
-                );
+  try {
+    // Firebase login
+    UserCredential userCredential = await FirebaseAuth.instance
+        .signInWithEmailAndPassword(
+      email: userName,
+      password: password,
+    );
 
-                // ✅ Navigate to dashboard on success
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const dashboard()),
-                  (Route<dynamic> route) => false,
-                );
-              } on FirebaseAuthException catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.message ?? "Login failed")),
-                );
-              }
-            },
+    String uid = userCredential.user!.uid;
+
+    // Fetch role from Firestore
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    if (userDoc.exists) {
+      String role = userDoc['role'];
+
+      if (role == 'doctor') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => DoctorStateContainer()),
+          (Route<dynamic> route) => false,
+        );
+      } else if (role == 'patient') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => PatientMainNavigation()),
+          (Route<dynamic> route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Unknown role: $role")),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("User data not found")),
+      );
+    }
+  } on FirebaseAuthException catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.message ?? "Login failed")),
+    );
+  }
+},
+
             style: OutlinedButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
