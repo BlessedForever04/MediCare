@@ -36,13 +36,11 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
   bool _isLoading = false;
 
   Future<String> _getLLMResponse(String prompt) async {
-    final url = Uri.parse(
-      'http://10.0.2.2:11434/api/generate',
-    ); 
+    final url = Uri.parse('http://10.0.2.2:11434/api/generate');
 
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({
-      'model': 'mistral', 
+      'model': 'mistral',
       'prompt': prompt,
       'stream': false,
     });
@@ -82,13 +80,6 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('AI Health Assistant'),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 2,
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

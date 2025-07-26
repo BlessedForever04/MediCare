@@ -42,9 +42,7 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
             children: [
               const CircleAvatar(
                 radius: 40,
-                backgroundImage: AssetImage(
-                  'assets/doctor.jpg',
-                ), 
+                backgroundImage: AssetImage('assets/doctor.jpg'),
               ),
               const SizedBox(width: 20),
               Column(
@@ -98,8 +96,8 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Dr. John Doe is a renowned cardiologist with over 15 years of experience. He is passionate about patient care and medical research.',
+          Text(
+            'Dr. $userName is a renowned cardiologist with over 15 years of experience. He is passionate about patient care and medical research.',
           ),
         ],
       ),
