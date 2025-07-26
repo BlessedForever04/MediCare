@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class LocalLLMService {
-  final String _url = 'http://10.0.2.2:11434/api/chat'; // emulator uses 10.0.2.2
+  final String _url =
+      'http://localhost:11434/api/chat';
 
   Future<String> getResponse(String prompt) async {
     try {
@@ -12,8 +13,8 @@ class LocalLLMService {
         body: jsonEncode({
           "model": "mistral",
           "messages": [
-            {"role": "user", "content": prompt}
-          ]
+            {"role": "user", "content": prompt},
+          ],
         }),
       );
 

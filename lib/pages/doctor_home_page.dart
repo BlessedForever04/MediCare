@@ -136,7 +136,7 @@ class DoctorHomePage extends StatelessWidget {
         ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-            // QR Scanner Button
+           
             Row(
               children: [
                 ElevatedButton.icon(
@@ -153,7 +153,7 @@ class DoctorHomePage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
-            // Summary Section
+          
             Row(
               children: [
                 _buildSummaryCard(
@@ -172,7 +172,7 @@ class DoctorHomePage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
-            // Upcoming Appointments
+            
             Text(
               '${summaryData['appointments'].toString()} Upcoming Appointments',
               style: Theme.of(context).textTheme.headlineSmall,
@@ -253,7 +253,7 @@ class DoctorHomePage extends StatelessWidget {
               );
             }),
             const SizedBox(height: 24),
-            // Active Patients List
+           
             Text(
               'Active Patients',
               style: Theme.of(context).textTheme.headlineSmall,
@@ -338,10 +338,10 @@ class DoctorHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Quick Actions
+         
           ],
         ),
-        // Floating Action Button for Add Appointment
+ 
         Positioned(
           bottom: 24,
           right: 24,

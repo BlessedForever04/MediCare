@@ -42,7 +42,7 @@ class PatientDetailsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // QR Code (mock)
+   
             Center(
               child: Column(
                 children: [
@@ -108,7 +108,7 @@ class _MedicalRecordCardState extends State<_MedicalRecordCard> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit),
-                  onPressed: () {}, // Edit record (mock)
+                  onPressed: () {}, 
                 ),
               ],
             ),

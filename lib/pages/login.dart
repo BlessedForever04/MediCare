@@ -37,23 +37,23 @@ class _loginState extends State<login> {
           child: ListView(
             children: [
               Container(
-                // column container
+           
                 padding: EdgeInsets.only(
                   top: MediaQuery.of(context).size.height * 0.1,
                 ),
                 child: Column(
-                  // Login page
+              
                   children: [
-                    appName(), // name of app
-                    sloganText(), // welcome text
-                    loginCred(userName, password), // id pass login
-                    forgotPass(), // forgot pass button
+                    appName(), 
+                    sloganText(),
+                    loginCred(userName, password), 
+                    forgotPass(), 
                     Column(
                       children: [
                         Padding(padding: EdgeInsetsGeometry.only(top: 30)),
-                        signinButton(userName, password), // sign in button
-                        googleButton(), // sign in with google button
-                        registerButton(context), // register button
+                        signinButton(userName, password), 
+                        googleButton(),
+                        registerButton(context),
                       ],
                     ),
                   ],
@@ -69,10 +69,10 @@ class _loginState extends State<login> {
 
 Widget appName() {
   return SizedBox(
-    // App name/logo
+  
     height: 100,
     width: 405,
-    // color: const Color.fromARGB(255, 255, 42, 42),
+    
     child: Center(
       child: Text(
         "MediCare",
@@ -92,7 +92,7 @@ Widget appName() {
 
 Widget sloganText() {
   return SizedBox(
-    // Slogan text
+   
     height: 70,
 
     child: Text(
@@ -178,17 +178,17 @@ Widget loginCred(var userName, var password) {
         ),
       ],
     ),
-    // user id and pass
+    
   );
 }
 
 Widget forgotPass() {
   return Container(
-    // Forget pass
+    
     width: 450,
     padding: EdgeInsets.only(left: 245),
     height: 40,
-    // color: Colors.red[300],
+    
     child: Text(
       "Forgot password?",
       style: TextStyle(
@@ -219,7 +219,7 @@ Widget signinButton(var f1, var f2) {
   }
 
   try {
-    // Firebase login
+
     UserCredential userCredential = await FirebaseAuth.instance
         .signInWithEmailAndPassword(
       email: userName,
@@ -228,7 +228,7 @@ Widget signinButton(var f1, var f2) {
 
     String uid = userCredential.user!.uid;
 
-    // Fetch role from Firestore
+
     DocumentSnapshot userDoc = await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
@@ -285,7 +285,7 @@ Widget signinButton(var f1, var f2) {
 
 Widget googleButton() {
   return Container(
-    // google sign in button
+
     // color: Colors.red[200],
     height: 70,
     padding: EdgeInsets.only(top: 20),
@@ -327,7 +327,7 @@ Widget googleButton() {
 
 Widget registerButton(BuildContext context) {
   return Container(
-    // Register button
+
     padding: EdgeInsets.only(top: 40),
     child: Column(
       children: [

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class PatientAIAssistantPage extends StatefulWidget {
   const PatientAIAssistantPage({super.key});
@@ -16,6 +18,7 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
     'Eat a balanced diet rich in vegetables and whole grains.',
     'Stay hydrated and avoid sugary drinks.',
   ];
+
   final List<Map<String, String>> chat = [
     {'role': 'user', 'text': 'What should I do for high blood pressure?'},
     {
@@ -28,17 +31,51 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
       'text': 'Exercise regularly and take your medicines on time.',
     },
   ];
-  final TextEditingController _controller = TextEditingController();
 
-  void _sendMessage() {
-    if (_controller.text.trim().isEmpty) return;
+  final TextEditingController _controller = TextEditingController();
+  bool _isLoading = false;
+
+  Future<String> _getLLMResponse(String prompt) async {
+    final url = Uri.parse(
+      'http://10.0.2.2:11434/api/generate',
+    ); 
+
+    final headers = {'Content-Type': 'application/json'};
+    final body = jsonEncode({
+      'model': 'mistral', 
+      'prompt': prompt,
+      'stream': false,
+    });
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['response'].toString().trim();
+      } else {
+        return 'AI Error: ${response.statusCode}';
+      }
+    } catch (e) {
+      return 'Failed to connect to AI: $e';
+    }
+  }
+
+  void _sendMessage() async {
+    final userMessage = _controller.text.trim();
+    if (userMessage.isEmpty) return;
+
     setState(() {
-      chat.add({'role': 'user', 'text': _controller.text.trim()});
-      chat.add({
-        'role': 'ai',
-        'text': 'This is a mock AI suggestion based on your question.',
-      });
+      chat.add({'role': 'user', 'text': userMessage});
+      _isLoading = true;
       _controller.clear();
+    });
+
+    final aiResponse = await _getLLMResponse(userMessage);
+
+    setState(() {
+      chat.add({'role': 'ai', 'text': aiResponse});
+      _isLoading = false;
     });
   }
 
@@ -123,6 +160,7 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
                 },
               ),
             ),
+            if (_isLoading) const CircularProgressIndicator(),
             Row(
               children: [
                 Expanded(
@@ -136,7 +174,7 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: _sendMessage,
+                  onPressed: _isLoading ? null : _sendMessage,
                   child: const Icon(Icons.send),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,

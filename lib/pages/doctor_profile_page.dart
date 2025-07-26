@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class DoctorProfilePage extends StatefulWidget {
   const DoctorProfilePage({super.key});
@@ -44,8 +43,8 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
               const CircleAvatar(
                 radius: 40,
                 backgroundImage: AssetImage(
-                  'assets/doctor_avatar.png',
-                ), // Use a placeholder asset
+                  'assets/doctor.jpg',
+                ), 
               ),
               const SizedBox(width: 20),
               Column(

@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:temp/pages/patient_profile_page.dart';
-import 'patient_drawer.dart';
-import 'patient_main_navigation.dart';
 
 class PatientHomePage extends StatefulWidget {
   const PatientHomePage({Key? key}) : super(key: key);
@@ -147,7 +144,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
           ),
           ElevatedButton(
             onPressed: () {
-              // Mock booking logic
+         
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Appointment booked (mock)!')),
@@ -169,7 +166,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // QR Code and Medical History
+          
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -232,7 +229,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Appointment Booking
+ 
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -281,7 +278,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Health Tip
+        
             Card(
               color: Colors.blue.shade50,
               shape: RoundedRectangleBorder(
@@ -304,7 +301,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 16),
-            // Achievements
+       
             Card(
               color: Colors.orange.shade50,
               shape: RoundedRectangleBorder(
@@ -321,7 +318,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 16),
-            // Motivation
+    
             Card(
               color: Colors.purple.shade50,
               shape: RoundedRectangleBorder(
@@ -335,14 +332,14 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 24),
-            // Reminders
+
             Text(
               'Today\'s Reminders',
               style: Theme.of(context).textTheme.titleMedium,
             ),
 
             SizedBox(
-              height: medicines.length * 100, // Rough estimate: 100 per item
+              height: medicines.length * 100,
               child: ListView.builder(
                 itemCount: medicines.length,
                 itemBuilder: (context, index) {

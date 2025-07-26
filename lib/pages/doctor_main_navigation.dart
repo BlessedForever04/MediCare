@@ -17,7 +17,7 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
   List<Map<String, dynamic>> patients = [
     {
       'id': 'p1',
-      'name': 'Alex Johnson',
+      'name': 'Sahil Wasankar',
       'avatar': 'A',
       'condition': 'Hypertension',
       'status': 'Stable',
@@ -39,7 +39,7 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
     },
     {
       'id': 'p2',
-      'name': 'Maria Garcia',
+      'name': 'Mayank Agrawal',
       'avatar': 'M',
       'condition': 'Type 2 Diabetes',
       'status': 'Needs Attention',
@@ -63,7 +63,7 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
 
   List<Map<String, dynamic>> appointments = [
     {
-      'patient': 'Alex Johnson',
+      'patient': 'Sahil Wasankar',
       'avatar': 'A',
       'date': '2024-06-10',
       'time': '10:00 AM',
@@ -71,7 +71,7 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
       'done': false,
     },
     {
-      'patient': 'Maria Garcia',
+      'patient': 'Naman Singh',
       'avatar': 'M',
       'date': '2024-06-10',
       'time': '11:30 AM',
@@ -126,6 +126,7 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
       'My Patients',
       'Doctor Profile',
       'AI Health Assistant',
+      'Doctor\'s Setting',
     ];
     return Scaffold(
       appBar: AppBar(title: Text(_pageTitles[_currentIndex])),

@@ -20,12 +20,12 @@ class PatientMainNavigation extends StatefulWidget {
 
 class _PatientMainNavigationState extends State<PatientMainNavigation> {
   final List<Widget> _pages = [
-    PatientHomePage(), // 0: Home
-    FamilyConnectPage(), // 1: Family Connect
-    PatientProfilePage(), // 2: Profile
-    PatientAIAssistantPage(), // 3: AI Assistant
-    PatientMedicineReminderPage(), // 4: Reminders
-    PatientSettingsPage(), // 5: Settings
+    PatientHomePage(), 
+    FamilyConnectPage(), 
+    PatientProfilePage(),
+    PatientAIAssistantPage(), 
+    PatientMedicineReminderPage(), 
+    PatientSettingsPage(), 
     login(),
   ];
 
