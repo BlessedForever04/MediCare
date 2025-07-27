@@ -40,6 +40,7 @@ class _PatientMainNavigationState extends State<PatientMainNavigation> {
     'logout',
   ];
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

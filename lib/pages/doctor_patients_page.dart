@@ -12,9 +12,9 @@ class DoctorPatientsPage extends StatelessWidget {
   });
 
   void _showAddPatientDialog(BuildContext context) {
-    final _nameController = TextEditingController();
-    final _idController = TextEditingController();
-    final _phoneController = TextEditingController();
+    final nameController = TextEditingController();
+    final idController = TextEditingController();
+    final phoneController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -23,17 +23,17 @@ class DoctorPatientsPage extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: _nameController,
+              controller: nameController,
               decoration: const InputDecoration(labelText: 'Patient Name'),
             ),
             const SizedBox(height: 12),
             TextField(
-              controller: _idController,
+              controller: idController,
               decoration: const InputDecoration(labelText: 'Patient ID'),
             ),
             const SizedBox(height: 12),
             TextField(
-              controller: _phoneController,
+              controller: phoneController,
               decoration: const InputDecoration(labelText: 'Phone Number'),
             ),
           ],
@@ -46,9 +46,9 @@ class DoctorPatientsPage extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               addPatient({
-                'id': _idController.text,
-                'name': _nameController.text,
-                'avatar': _nameController.text.isNotEmpty ? _nameController.text[0] : '?',
+                'id': idController.text,
+                'name': nameController.text,
+                'avatar': nameController.text.isNotEmpty ? nameController.text[0] : '?',
                 'condition': 'Unknown',
                 'status': 'New',
                 'lastRecord': '',
@@ -98,8 +98,8 @@ class DoctorPatientsPage extends StatelessWidget {
           right: 24,
           child: FloatingActionButton(
             onPressed: () => _showAddPatientDialog(context),
-            child: const Icon(Icons.person_add),
             tooltip: 'Add Patient',
+            child: const Icon(Icons.person_add),
           ),
         ),
       ],

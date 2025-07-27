@@ -175,7 +175,6 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _sendMessage,
-                  child: const Icon(Icons.send),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
@@ -183,6 +182,7 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
+                  child: const Icon(Icons.send),
                 ),
               ],
             ),

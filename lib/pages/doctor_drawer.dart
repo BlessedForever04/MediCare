@@ -6,10 +6,10 @@ class DoctorDrawer extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onSelect;
   const DoctorDrawer({
-    Key? key,
+    super.key,
     required this.selectedIndex,
     required this.onSelect,
-  }) : super(key: key);
+  });
 
   @override
   State<DoctorDrawer> createState() => _DoctorDrawerState();
@@ -18,6 +18,7 @@ class DoctorDrawer extends StatefulWidget {
 String userName = "Loading";
 
 class _DoctorDrawerState extends State<DoctorDrawer> {
+  @override
   void initState() {
     super.initState();
     _fetchUserName();

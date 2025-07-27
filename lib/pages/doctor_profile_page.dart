@@ -11,6 +11,7 @@ class DoctorProfilePage extends StatefulWidget {
 
 class _DoctorProfilePageState extends State<DoctorProfilePage> {
   String userName = "Loading";
+  @override
   void initState() {
     super.initState();
     _fetchUserName();

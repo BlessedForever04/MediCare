@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class FamilyConnectPage extends StatefulWidget {
-  const FamilyConnectPage({Key? key}) : super(key: key);
+  const FamilyConnectPage({super.key});
 
   @override
   State<FamilyConnectPage> createState() => _FamilyConnectPageState();
@@ -10,21 +10,21 @@ class FamilyConnectPage extends StatefulWidget {
 class _FamilyConnectPageState extends State<FamilyConnectPage> {
   final List<Map<String, dynamic>> familyMembers = [
     {
-      'name': 'Alice Doe',
+      'name': 'Gangu Dev',
       'relation': 'Mother',
       'status': 'Healthy',
       'lastUpdate': 'Today',
       'ill': false,
     },
     {
-      'name': 'Bob Doe',
+      'name': 'Ram Dev',
       'relation': 'Father',
       'status': 'Fever',
       'lastUpdate': 'Today',
       'ill': true,
     },
     {
-      'name': 'Jane Doe',
+      'name': 'Tamanna Dev',
       'relation': 'Sister',
       'status': 'Healthy',
       'lastUpdate': 'Yesterday',
@@ -32,9 +32,9 @@ class _FamilyConnectPageState extends State<FamilyConnectPage> {
     },
   ];
   final List<String> notifications = [
-    'Bob Doe reported fever today.',
-    'Alice Doe completed her medicine streak!',
-    'Jane Doe updated her health status.',
+    'Gangu Dev reported fever today.',
+    'Ram Dev completed her medicine streak!',
+    'Tamanna Dev updated her health status.',
   ];
 
   @override

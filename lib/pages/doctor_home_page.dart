@@ -325,11 +325,11 @@ class DoctorHomePage extends StatelessWidget {
                             ),
                           );
                         },
-                        child: const Text('Assign Medicine'),
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(80, 32),
                           padding: EdgeInsets.zero,
                         ),
+                        child: const Text('Assign Medicine'),
                       ),
                     ],
                   ),
@@ -347,8 +347,8 @@ class DoctorHomePage extends StatelessWidget {
           right: 24,
           child: FloatingActionButton(
             onPressed: () => _showAddAppointmentDialog(context),
-            child: const Icon(Icons.add),
             tooltip: 'Add Appointment',
+            child: const Icon(Icons.add),
           ),
         ),
       ],

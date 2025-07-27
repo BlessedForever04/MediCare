@@ -108,7 +108,7 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> _pages = [
+    final List<Widget> pages = [
       DoctorHomePage(
         patients: patients,
         appointments: appointments,
@@ -121,7 +121,7 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
       const PatientAIAssistantPage(),
       const doctor_settings(),
     ];
-    final List<String> _pageTitles = [
+    final List<String> pageTitles = [
       'Doctor Dashboard',
       'My Patients',
       'Doctor Profile',
@@ -129,7 +129,7 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
       'Doctor\'s Setting',
     ];
     return Scaffold(
-      appBar: AppBar(title: Text(_pageTitles[_currentIndex])),
+      appBar: AppBar(title: Text(pageTitles[_currentIndex])),
       drawer: DoctorDrawer(
         selectedIndex: _currentIndex,
         onSelect: (i) {
@@ -140,7 +140,7 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
           Navigator.pop(context);
         },
       ),
-      body: _pages[_currentIndex],
+      body: pages[_currentIndex],
     );
   }
 }
