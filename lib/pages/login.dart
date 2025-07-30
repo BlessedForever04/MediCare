@@ -1,19 +1,11 @@
-// ignore_for_file: unused_import, strict_top_level_inference
-
 import 'package:flutter/material.dart';
-import 'package:temp/pages/doctor_home_page.dart';
 import 'package:temp/pages/doctor_main_navigation.dart';
-import 'package:temp/pages/patient_details_page.dart';
-import 'package:temp/pages/patient_home_page.dart';
 import 'package:temp/pages/patient_main_navigation.dart';
 import 'package:temp/pages/register.dart';
 import 'package:temp/main.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui' as ui;
-
-import 'package:temp/pages/splash.dart';
 
 class login extends StatefulWidget {
   const login({super.key});
@@ -37,21 +29,19 @@ class _loginState extends State<login> {
           child: ListView(
             children: [
               Container(
-           
                 padding: EdgeInsets.only(
                   top: MediaQuery.of(context).size.height * 0.1,
                 ),
                 child: Column(
-              
                   children: [
-                    appName(), 
+                    appName(),
                     sloganText(),
-                    loginCred(userName, password), 
-                    forgotPass(), 
+                    loginCred(userName, password),
+                    forgotPass(),
                     Column(
                       children: [
                         Padding(padding: EdgeInsetsGeometry.only(top: 30)),
-                        signinButton(userName, password), 
+                        signinButton(userName, password),
                         googleButton(),
                         registerButton(context),
                       ],
@@ -69,10 +59,9 @@ class _loginState extends State<login> {
 
 Widget appName() {
   return SizedBox(
-  
     height: 100,
     width: 405,
-    
+
     child: Center(
       child: Text(
         "MediCare",
@@ -92,7 +81,6 @@ Widget appName() {
 
 Widget sloganText() {
   return SizedBox(
-   
     height: 70,
 
     child: Text(
@@ -178,22 +166,29 @@ Widget loginCred(var userName, var password) {
         ),
       ],
     ),
-    
   );
 }
 
 Widget forgotPass() {
   return Container(
-    
-    width: 450,
-    padding: EdgeInsets.only(left: 245),
-    height: 40,
-    
-    child: Text(
-      "Forgot password?",
-      style: TextStyle(
-        fontSize: 19,
-        color: const Color.fromARGB(255, 57, 57, 57),
+    // decoration: BoxDecoration(color: Colors.orangeAccent),
+    // width: 450,
+    // padding: EdgeInsets.only(left: 245),
+
+    // height: 40,
+    child: Padding(
+      padding: EdgeInsets.only(right: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            "Forgot password?",
+            style: TextStyle(
+              fontSize: 19,
+              color: const Color.fromARGB(255, 57, 57, 57),
+            ),
+          ),
+        ],
       ),
     ),
   );
@@ -208,63 +203,65 @@ Widget signinButton(var f1, var f2) {
         builder: (BuildContext context) {
           return OutlinedButton.icon(
             onPressed: () async {
-  String userName = f1.text.trim();
-  String password = f2.text.trim();
+              String userName = f1.text.trim();
+              String password = f2.text.trim();
 
-  if (userName.isEmpty || password.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Enter all credentials")),
-    );
-    return;
-  }
+              if (userName.isEmpty || password.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Enter all credentials")),
+                );
+                return;
+              }
 
-  try {
+              try {
+                UserCredential userCredential = await FirebaseAuth.instance
+                    .signInWithEmailAndPassword(
+                      email: userName,
+                      password: password,
+                    );
 
-    UserCredential userCredential = await FirebaseAuth.instance
-        .signInWithEmailAndPassword(
-      email: userName,
-      password: password,
-    );
+                String uid = userCredential.user!.uid;
 
-    String uid = userCredential.user!.uid;
+                DocumentSnapshot userDoc = await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(uid)
+                    .get();
 
+                if (userDoc.exists) {
+                  String role = userDoc['role'];
 
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-
-    if (userDoc.exists) {
-      String role = userDoc['role'];
-
-      if (role == 'doctor') {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => DoctorStateContainer()),
-          (Route<dynamic> route) => false,
-        );
-      } else if (role == 'patient') {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => PatientMainNavigation()),
-          (Route<dynamic> route) => false,
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Unknown role: $role")),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("User data not found")),
-      );
-    }
-  } on FirebaseAuthException catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(e.message ?? "Login failed")),
-    );
-  }
-},
+                  if (role == 'doctor') {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DoctorStateContainer(),
+                      ),
+                      (Route<dynamic> route) => false,
+                    );
+                  } else if (role == 'patient') {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PatientMainNavigation(),
+                      ),
+                      (Route<dynamic> route) => false,
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Unknown role: $role")),
+                    );
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("User data not found")),
+                  );
+                }
+              } on FirebaseAuthException catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.message ?? "Login failed")),
+                );
+              }
+            },
 
             style: OutlinedButton.styleFrom(
               shape: RoundedRectangleBorder(
@@ -285,7 +282,6 @@ Widget signinButton(var f1, var f2) {
 
 Widget googleButton() {
   return Container(
-
     // color: Colors.red[200],
     height: 70,
     padding: EdgeInsets.only(top: 20),
@@ -327,7 +323,6 @@ Widget googleButton() {
 
 Widget registerButton(BuildContext context) {
   return Container(
-
     padding: EdgeInsets.only(top: 40),
     child: Column(
       children: [
