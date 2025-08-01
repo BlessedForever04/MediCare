@@ -31,6 +31,7 @@ class _MyAppState extends State<register_page> {
     }
 
     try {
+      // Register user in Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: mail.text.trim(),
@@ -39,18 +40,28 @@ class _MyAppState extends State<register_page> {
 
       String uid = userCredential.user!.uid;
 
+      // Get user count BEFORE storing the document
+      final countQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .count()
+          .get();
+      int? userId = 101 + (countQuery.count ?? 0);
+
+      // Build user data map
       Map<String, dynamic> userData = {
         'first_name': firstName.text.trim(),
         'last_name': lastName.text.trim(),
         'email': mail.text.trim(),
         'role': isDoctor ? 'doctor' : 'patient',
         'created_at': FieldValue.serverTimestamp(),
+        'userid': userId, // Correctly resolved value
       };
 
       if (isDoctor) {
         userData['registration_number'] = registrationNumber.text.trim();
       }
 
+      // Store in Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)

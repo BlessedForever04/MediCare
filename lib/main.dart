@@ -1,10 +1,29 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:temp/pages/patient_home_page.dart';
 import 'package:temp/pages/splash.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyAq8oueRrcyLrkC3KUikJDiAtI2CladByM",
+        authDomain: "hackathonproject-fbf26.firebaseapp.com",
+        projectId: "hackathonproject-fbf26",
+        storageBucket: "hackathonproject-fbf26.firebasestorage.app",
+        messagingSenderId: "189759224181",
+        appId: "1:189759224181:web:8acb2a6290b53aa041fb3c",
+        measurementId: "G-5VF93NHJZR",
+      ),
+    );
+  } else {
+    await Firebase.initializeApp(); // For Android/iOS (uses firebase_options.dart if generated)
+  }
+
   runApp(const MyApp());
 }
 
@@ -20,6 +39,9 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: splash());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: splash(), // Or Splash(), based on logic
+    );
   }
 }

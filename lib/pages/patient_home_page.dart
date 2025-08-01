@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PatientHomePage extends StatefulWidget {
   const PatientHomePage({super.key});
@@ -39,12 +41,31 @@ class _PatientHomePageState extends State<PatientHomePage> {
     'Wash your hands regularly.',
     'Limit sugary drinks and snacks.',
   ];
+  
   String? todayTip;
+  bool showFullQR = false; // Toggle for QR code view
+  String? userId; // Firebase user ID
 
   @override
   void initState() {
     super.initState();
     todayTip = (healthTips..shuffle()).first;
+    _fetchUserId();
+  }
+
+  // Fetch Firebase user ID
+  void _fetchUserId() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    setState(() {
+      userId = uid;
+    });
+  }
+
+  // Toggle between QR icon and actual QR code
+  void _toggleQRView() {
+    setState(() {
+      showFullQR = !showFullQR;
+    });
   }
 
   void _showMedicalHistoryDialog() {
@@ -144,7 +165,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
           ),
           ElevatedButton(
             onPressed: () {
-         
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Appointment booked (mock)!')),
@@ -159,14 +179,14 @@ class _PatientHomePageState extends State<PatientHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final patientId = '22310183';
+    final patientId = userId ?? '22310183'; // Use Firebase ID if available
+    
     return Scaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -177,23 +197,36 @@ class _PatientHomePageState extends State<PatientHomePage> {
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    Container(
-                      width: 90,
-                      height: 90,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.blue.shade100,
-                          width: 2,
+                    // QR Code Section with toggle functionality
+                    InkWell(
+                      onTap: _toggleQRView,
+                      child: Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.blue.shade100,
+                            width: 2,
+                          ),
                         ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.qr_code,
-                          size: 60,
-                          color: Colors.blue,
-                        ),
+                        child: showFullQR && userId != null
+                            ? Padding(
+                                padding: const EdgeInsets.all(4.0),
+                                child: QrImageView(
+                                  data: userId!,
+                                  version: QrVersions.auto,
+                                  size: 80,
+                                ),
+                              )
+                            : const Center(
+                                child: Icon(
+                                  Icons.qr_code,
+                                  size: 60,
+                                  color: Colors.blue,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 20),
@@ -229,7 +262,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 20),
- 
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -278,7 +310,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 20),
-        
             Card(
               color: Colors.blue.shade50,
               shape: RoundedRectangleBorder(
@@ -301,7 +332,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 16),
-       
             Card(
               color: Colors.orange.shade50,
               shape: RoundedRectangleBorder(
@@ -318,7 +348,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 16),
-    
             Card(
               color: Colors.purple.shade50,
               shape: RoundedRectangleBorder(
@@ -332,12 +361,10 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 24),
-
             Text(
               'Today\'s Reminders',
               style: Theme.of(context).textTheme.titleMedium,
             ),
-
             SizedBox(
               height: medicines.length * 100,
               child: ListView.builder(
