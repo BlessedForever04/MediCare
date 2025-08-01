@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:temp/pages/splash.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -11,11 +12,11 @@ void main() async {
       options: const FirebaseOptions(
         apiKey: "AIzaSyAq8oueRrcyLrkC3KUikJDiAtI2CladByM",
         authDomain: "hackathonproject-fbf26.firebaseapp.com",
-  projectId: "hackathonproject-fbf26",
-  storageBucket: "hackathonproject-fbf26.firebasestorage.app",
-  messagingSenderId: "189759224181",
-  appId: "1:189759224181:web:8acb2a6290b53aa041fb3c",
-  measurementId: "G-5VF93NHJZR"
+        projectId: "hackathonproject-fbf26",
+        storageBucket: "hackathonproject-fbf26.firebasestorage.app",
+        messagingSenderId: "189759224181",
+        appId: "1:189759224181:web:8acb2a6290b53aa041fb3c",
+        measurementId: "G-5VF93NHJZR",
       ),
     );
   } else {

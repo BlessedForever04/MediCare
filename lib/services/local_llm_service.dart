@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class LocalLLMService {
   final String _url =
-      'http://localhost:11434/api/chat';
+      'http://192.168.43.194:3000/api/chat';
 
   Future<String> getResponse(String prompt) async {
     try {
