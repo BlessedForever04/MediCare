@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PatientDrawer extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onSelect;
+
   const PatientDrawer({
     super.key,
     required this.selectedIndex,
@@ -15,16 +16,16 @@ class PatientDrawer extends StatefulWidget {
   State<PatientDrawer> createState() => _PatientDrawerState();
 }
 
-String userName = "Loading";
-
 class _PatientDrawerState extends State<PatientDrawer> {
+  String userName = "Loading..";
+
   @override
   void initState() {
     super.initState();
     _fetchUserName();
   }
 
-  void _fetchUserName() async {
+  Future<void> _fetchUserName() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       final doc = await FirebaseFirestore.instance
@@ -33,10 +34,15 @@ class _PatientDrawerState extends State<PatientDrawer> {
           .get();
       if (doc.exists) {
         setState(() {
-          userName = doc.data()?['first_name'] ?? 'Loading..';
+          userName = doc.data()?['first_name'] ?? 'User';
         });
       }
     }
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
@@ -61,7 +67,7 @@ class _PatientDrawerState extends State<PatientDrawer> {
                   backgroundColor: Colors.white,
                   child: Icon(Icons.person, size: 40, color: Colors.blue),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text(
                   userName,
                   style: const TextStyle(
@@ -70,62 +76,34 @@ class _PatientDrawerState extends State<PatientDrawer> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text('Patient', style: TextStyle(color: Colors.white70)),
+                const Text('Patient', style: TextStyle(color: Colors.white70)),
               ],
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Home'),
-            selected: widget.selectedIndex == 0,
-            selectedTileColor: Colors.blue.shade50,
-            onTap: () => widget.onSelect(0),
-          ),
-          ListTile(
-            leading: const Icon(Icons.family_restroom),
-            title: const Text('Family Connect'),
-            selected: widget.selectedIndex == 1,
-            selectedTileColor: Colors.blue.shade50,
-            onTap: () => widget.onSelect(1),
-          ),
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Profile'),
-            selected: widget.selectedIndex == 2,
-            selectedTileColor: Colors.blue.shade50,
-            onTap: () => widget.onSelect(2),
-          ),
-          ListTile(
-            leading: const Icon(Icons.psychology),
-            title: const Text('AI Assistant'),
-            selected: widget.selectedIndex == 3,
-            selectedTileColor: Colors.blue.shade50,
-            onTap: () => widget.onSelect(3),
-          ),
-          ListTile(
-            leading: const Icon(Icons.medication),
-            title: const Text('Reminders'),
-            selected: widget.selectedIndex == 4,
-            selectedTileColor: Colors.blue.shade50,
-            onTap: () => widget.onSelect(4),
-          ),
+          _buildTile(Icons.home, 'Home', 0),
+          _buildTile(Icons.family_restroom, 'Family Connect', 1),
+          _buildTile(Icons.person, 'Profile', 2),
+          _buildTile(Icons.psychology, 'AI Assistant', 3),
+          _buildTile(Icons.medication, 'Reminders', 4),
           const Divider(),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
-            selected: widget.selectedIndex == 5,
-            selectedTileColor: Colors.blue.shade50,
-            onTap: () => widget.onSelect(5),
-          ),
+          _buildTile(Icons.settings, 'Settings', 5),
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
-            onTap: () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
+            onTap: () => _logout(context),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTile(IconData icon, String label, int index) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(label),
+      selected: widget.selectedIndex == index,
+      selectedTileColor: Colors.blue.shade50,
+      onTap: () => widget.onSelect(index),
     );
   }
 }
