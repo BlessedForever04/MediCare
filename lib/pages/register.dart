@@ -25,58 +25,65 @@ class _MyAppState extends State<register_page> {
   double elevationd = 10;
 
   Future<void> register() async {
-    if (password.text.trim() != confirmpass.text.trim()) {
-      setState(() => error = "Passwords do not match");
-      return;
-    }
+  if (password.text.trim() != confirmpass.text.trim()) {
+    setState(() => error = "Passwords do not match");
+    return;
+  }
 
-    try {
-      // Register user in Firebase Auth
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: mail.text.trim(),
-            password: password.text.trim(),
-          );
+  try {
+    UserCredential userCredential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(
+      email: mail.text.trim(),
+      password: password.text.trim(),
+    );
 
-      String uid = userCredential.user!.uid;
+    String uid = userCredential.user!.uid;
 
-      // Get user count BEFORE storing the document
-      final countQuery = await FirebaseFirestore.instance
-          .collection('users')
-          .count()
-          .get();
-      int? userId = 101 + (countQuery.count ?? 0);
+    // Generate custom user ID
+    final countQuery = await FirebaseFirestore.instance
+        .collection(isDoctor ? 'doctors' : 'patients')
+        .count()
+        .get();
+    int userId = 101 + (countQuery.count ?? 0);
 
-      // Build user data map
-      Map<String, dynamic> userData = {
+    if (isDoctor) {
+      await FirebaseFirestore.instance.collection('doctors').doc(uid).set({
+        'UserInfo': {
+          'first_name': firstName.text.trim(),
+          'last_name': lastName.text.trim(),
+          'email': mail.text.trim(),
+          'userid': userId,
+          'registration_number': registrationNumber.text.trim(),
+        },
+        'PatientDetails': {
+          'ActivePatients': [],
+          'PatientAppointments': [],
+        }
+      });
+    } else {
+      await FirebaseFirestore.instance.collection('patients').doc(uid).set({
         'first_name': firstName.text.trim(),
         'last_name': lastName.text.trim(),
         'email': mail.text.trim(),
-        'role': isDoctor ? 'doctor' : 'patient',
-        'created_at': FieldValue.serverTimestamp(),
-        'userid': userId, // Correctly resolved value
-      };
-
-      if (isDoctor) {
-        userData['registration_number'] = registrationNumber.text.trim();
-      }
-
-      // Store in Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .set(userData);
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("User registered successfully!")));
-    } on FirebaseAuthException catch (e) {
-      setState(() => error = e.message ?? "Something went wrong");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: ${e.message}")));
+        'userid': userId,
+        'HealthInfo': {
+          'currentHealthStatus': '',
+          'History': [],
+        },
+        'FamilyConnections': [],
+      });
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("User registered successfully!")),
+    );
+  } on FirebaseAuthException catch (e) {
+    setState(() => error = e.message ?? "Something went wrong");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error: ${e.message}")),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {

@@ -10,53 +10,39 @@ class PatientProfilePage extends StatefulWidget {
 }
 
 class _PatientProfilePageState extends State<PatientProfilePage> {
+  Map<String, dynamic>? patientData;
+  List<dynamic> medicalHistory = [];
+  bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
-    _fetchUserName();
+    fetchPatientData();
   }
 
-  void _fetchUserName() async {
+  Future<void> fetchPatientData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       final doc = await FirebaseFirestore.instance
-          .collection('users')
+          .collection('patients')
           .doc(uid)
           .get();
       if (doc.exists) {
+        final data = doc.data();
         setState(() {
-          userName = doc.data()?['first_name'] ?? 'Loading..';
+          patientData = data;
+          medicalHistory = data?['HealthInfo']?['History'] ?? [];
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
         });
       }
     }
   }
 
-  String userName = 'Loading...';
-
-  Map<String, dynamic> patient = {
-    'id': 'p123',
-    'name': 'John Doe',
-    'age': 29,
-    'gender': 'Male',
-    'email': 'john.doe@example.com',
-    'phone': '+1 234 567 890',
-    'profilePic': null,
-    'medicalHistory': [
-      {
-        'disease': 'Hypertension',
-        'diagnosisDate': '2023-11-15',
-        'medicine': 'Lisinopril 10mg',
-      },
-      {
-        'disease': 'Type 2 Diabetes',
-        'diagnosisDate': '2023-09-22',
-        'medicine': 'Metformin 500mg',
-      },
-    ],
-  };
-
   void _editProfile() {
-    // Mock edit dialog
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -74,6 +60,20 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (patientData == null) {
+      return const Scaffold(
+        body: Center(child: Text('Patient data not found')),
+      );
+    }
+
+    String fullName =
+        "${patientData?['first_name'] ?? ''} ${patientData?['last_name'] ?? ''}";
+    String email = patientData?['email'] ?? 'N/A';
+
     return Scaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -94,16 +94,11 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    userName,
+                    fullName,
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
-
-                  Text(
-                    'ID: ${patient['id']}',
-                    style: const TextStyle(color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
@@ -139,9 +134,7 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
                     const SizedBox(height: 8),
                     ListTile(
                       leading: const Icon(Icons.email),
-                      title: Text(
-                        FirebaseAuth.instance.currentUser?.email ?? 'No email',
-                      ),
+                      title: Text(email),
                     ),
                   ],
                 ),
@@ -163,16 +156,18 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    ...List.generate(patient['medicalHistory'].length, (i) {
-                      final record = patient['medicalHistory'][i];
+                    if (medicalHistory.isEmpty)
+                      const Text('No medical records found.'),
+                    ...medicalHistory.map((record) {
                       return ListTile(
                         leading: const Icon(Icons.description),
-                        title: Text(record['disease']),
+                        title: Text(record['disease'] ?? 'Unknown Disease'),
                         subtitle: Text(
-                          'Diagnosed: ${record['diagnosisDate']}\nMedicine: ${record['medicine']}',
+                          'Diagnosed: ${record['diagnosisDate'] ?? 'N/A'}\n'
+                          'Medicine: ${record['medicine'] ?? 'N/A'}',
                         ),
                       );
-                    }),
+                    }).toList(),
                   ],
                 ),
               ),

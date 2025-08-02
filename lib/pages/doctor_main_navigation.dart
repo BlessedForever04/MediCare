@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:temp/pages/doctor_settings_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'doctor_home_page.dart';
 import 'doctor_patients_page.dart';
 import 'doctor_profile_page.dart';
 import 'doctor_ai_assistant_page.dart';
 import 'doctor_drawer.dart';
+import 'doctor_settings_page.dart';
 
 class DoctorStateContainer extends StatefulWidget {
   const DoctorStateContainer({super.key});
@@ -14,96 +16,110 @@ class DoctorStateContainer extends StatefulWidget {
 }
 
 class _DoctorStateContainerState extends State<DoctorStateContainer> {
-  List<Map<String, dynamic>> patients = [
-    {
-      'id': 'p1',
-      'name': 'Sahil Wasankar',
-      'avatar': 'A',
-      'condition': 'Hypertension',
-      'status': 'Stable',
-      'lastRecord': 'BP: 130/85, Lisinopril 10mg',
-      'compliance': true,
-      'records': [
-        {
-          'disease': 'Hypertension',
-          'diagnosisDate': '2023-11-15',
-          'medicine': 'Lisinopril 10mg',
-          'duration': '6 months',
-          'hospital': 'City Hospital',
-          'doctor': 'Dr. Sarah Miller',
-          'notes': 'Monitor BP daily',
-          'precautions': 'Reduce salt intake',
-          'avoid': 'Salty foods',
-        },
-      ],
-    },
-    {
-      'id': 'p2',
-      'name': 'Mayank Agrawal',
-      'avatar': 'M',
-      'condition': 'Type 2 Diabetes',
-      'status': 'Needs Attention',
-      'lastRecord': 'Glucose: 180 mg/dL, Metformin 500mg',
-      'compliance': false,
-      'records': [
-        {
-          'disease': 'Type 2 Diabetes',
-          'diagnosisDate': '2023-09-22',
-          'medicine': 'Metformin 500mg',
-          'duration': 'Ongoing',
-          'hospital': 'Metro Clinic',
-          'doctor': 'Dr. James Wilson',
-          'notes': 'Check blood sugar before breakfast',
-          'precautions': 'Exercise regularly',
-          'avoid': 'Sugary foods',
-        },
-      ],
-    },
-  ];
-
-  List<Map<String, dynamic>> appointments = [
-    {
-      'patient': 'Sahil Wasankar',
-      'avatar': 'A',
-      'date': '2024-06-10',
-      'time': '10:00 AM',
-      'reason': 'Follow-up for Hypertension',
-      'done': false,
-    },
-    {
-      'patient': 'Naman Singh',
-      'avatar': 'M',
-      'date': '2024-06-10',
-      'time': '11:30 AM',
-      'reason': 'New Consultation - Diabetes',
-      'done': false,
-    },
-  ];
-
+  List<Map<String, dynamic>> patients = [];
+  List<Map<String, dynamic>> appointments = [];
   int _currentIndex = 0;
 
-  void addPatient(Map<String, dynamic> patient) {
-    setState(() {
-      patients.add(patient);
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadDoctorData();
   }
 
-  void addAppointment(Map<String, dynamic> appt) {
-    setState(() {
-      appointments.add(appt);
-    });
+  Future<void> _loadDoctorData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final docRef = FirebaseFirestore.instance.collection('doctors').doc(uid);
+    final docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+      final data = docSnap.data()!;
+      final details = data['PatientDetails'] ?? {};
+
+      // Fetch appointments
+      final rawAppointments = List<Map<String, dynamic>>.from(
+        details['PatientAppointments'] ?? [],
+      );
+      appointments = rawAppointments;
+
+      // Fetch patient UIDs and get full patient documents
+      final patientUIDs = List<String>.from(details['ActivePatients'] ?? []);
+      patients = [];
+
+      for (String pid in patientUIDs) {
+        final patientDoc = await FirebaseFirestore.instance
+            .collection('patients')
+            .doc(pid)
+            .get();
+        if (patientDoc.exists) {
+          final patientData = patientDoc.data()!;
+          patientData['id'] = pid;
+          patientData['userid'] = patientData['userid'] ?? pid;
+          patientData['first_name'] = patientData['first_name'] ?? 'Unknown';
+          patientData['last_name'] = patientData['last_name'] ?? '';
+          patientData['HealthInfo'] ??= {};
+          patientData['HealthInfo']['currentHealthStatus'] =
+              patientData['HealthInfo']['currentHealthStatus'] ?? 'Unknown';
+          patients.add(patientData);
+        }
+      }
+
+      setState(() {});
+    }
   }
 
-  void markAppointmentDone(int index) {
+  void addAppointment(Map<String, dynamic> newAppointment) async {
     setState(() {
-      appointments[index]['done'] = true;
+      appointments.add(newAppointment);
     });
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance.collection('doctors').doc(uid).update({
+        'PatientDetails.PatientAppointments': appointments,
+      });
+    }
   }
 
-  void deleteAppointment(int index) {
-    setState(() {
-      appointments.removeAt(index);
-    });
+  void deleteAppointment(int index) async {
+    final removed = appointments.removeAt(index);
+    setState(() {});
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance.collection('doctors').doc(uid).update({
+        'PatientDetails.PatientAppointments': appointments,
+      });
+    }
+  }
+
+  void markAppointmentDone(int index) async {
+    appointments[index]['done'] = true;
+    setState(() {});
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance.collection('doctors').doc(uid).update({
+        'PatientDetails.PatientAppointments': appointments,
+      });
+    }
+  }
+
+  void addPatient(Map<String, dynamic> newPatient) async {
+    newPatient['id'] = newPatient['id'] ?? newPatient['userid'] ?? '';
+    newPatient['userid'] = newPatient['userid'] ?? newPatient['id'] ?? '';
+    patients.add(newPatient);
+    setState(() {});
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      final updatedUids = patients.map((p) => p['id']).toList();
+
+      await FirebaseFirestore.instance.collection('doctors').doc(uid).update({
+        'PatientDetails.ActivePatients': updatedUids,
+      });
+    }
   }
 
   @override
@@ -121,6 +137,7 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
       const PatientAIAssistantPage(),
       const doctor_settings(),
     ];
+
     final List<String> pageTitles = [
       'Doctor Dashboard',
       'My Patients',
@@ -128,15 +145,13 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
       'AI Health Assistant',
       'Doctor\'s Setting',
     ];
+
     return Scaffold(
       appBar: AppBar(title: Text(pageTitles[_currentIndex])),
       drawer: DoctorDrawer(
         selectedIndex: _currentIndex,
         onSelect: (i) {
-          setState(() {
-            _currentIndex = i;
-            print(i);
-          });
+          setState(() => _currentIndex = i);
           Navigator.pop(context);
         },
       ),

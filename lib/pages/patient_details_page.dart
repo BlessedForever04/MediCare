@@ -1,48 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'add_medical_record_page.dart';
 
-class PatientDetailsPage extends StatelessWidget {
+class PatientDetailsPage extends StatefulWidget {
   final Map<String, dynamic> patient;
 
   const PatientDetailsPage({super.key, required this.patient});
 
   @override
+  State<PatientDetailsPage> createState() => _PatientDetailsPageState();
+}
+
+class _PatientDetailsPageState extends State<PatientDetailsPage> {
+  List<Map<String, dynamic>> records = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchMedicalHistory();
+  }
+
+  Future<void> _fetchMedicalHistory() async {
+    final patientId = widget.patient['userid'] ?? widget.patient['id'];
+
+    final doc = await FirebaseFirestore.instance
+        .collection('patients')
+        .doc(patientId)
+        .get();
+
+    if (doc.exists) {
+      final history = doc.data()?['HealthInfo']?['History'] ?? [];
+      setState(() {
+        records = List<Map<String, dynamic>>.from(history);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> records = [
-      {
-        'disease': 'Hypertension',
-        'diagnosisDate': '2023-11-15',
-        'medicine': 'Lisinopril 10mg',
-        'duration': '6 months',
-        'hospital': 'City Hospital',
-        'doctor': 'Dr. Sarah Miller',
-        'notes': 'Monitor BP daily',
-        'precautions': 'Reduce salt intake',
-        'avoid': 'Salty foods',
-      },
-      {
-        'disease': 'Type 2 Diabetes',
-        'diagnosisDate': '2023-09-22',
-        'medicine': 'Metformin 500mg',
-        'duration': 'Ongoing',
-        'hospital': 'Metro Clinic',
-        'doctor': 'Dr. James Wilson',
-        'notes': 'Check blood sugar before breakfast',
-        'precautions': 'Exercise regularly',
-        'avoid': 'Sugary foods',
-      },
-    ];
+    final patientName =
+        '${widget.patient['first_name'] ?? ''} ${widget.patient['last_name'] ?? ''}';
+    final patientId = widget.patient['userid'] ?? widget.patient['id'];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(patient['name']),
-      ),
+      appBar: AppBar(title: Text(patientName)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-   
             Center(
               child: Column(
                 children: [
@@ -53,13 +59,20 @@ class PatientDetailsPage extends StatelessWidget {
                     child: const Center(child: Icon(Icons.qr_code, size: 80)),
                   ),
                   const SizedBox(height: 8),
-                  Text('Patient ID: ${patient['id']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Patient ID: $patientId',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            Text('Medical History', style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              'Medical History',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 16),
+            if (records.isEmpty) const Text("No medical records found."),
             ...records.map((record) => _MedicalRecordCard(record: record)),
           ],
         ),
@@ -68,8 +81,10 @@ class PatientDetailsPage extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddMedicalRecordPage()),
-          );
+            MaterialPageRoute(
+              builder: (context) => AddMedicalRecordPage(patientId: patientId),
+            ),
+          ).then((_) => _fetchMedicalHistory()); // Refresh after adding
         },
         icon: const Icon(Icons.add),
         label: const Text('Add Record'),
@@ -97,8 +112,10 @@ class _MedicalRecordCardState extends State<_MedicalRecordCard> {
       child: Column(
         children: [
           ListTile(
-            title: Text(r['disease']),
-            subtitle: Text('Diagnosed: ${r['diagnosisDate']}'),
+            title: Text(r['disease'] ?? 'Unknown Disease'),
+            subtitle: Text(
+              'Diagnosed: ${r['diagnosisDate'] ?? 'Unknown Date'}',
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -108,7 +125,9 @@ class _MedicalRecordCardState extends State<_MedicalRecordCard> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit),
-                  onPressed: () {}, 
+                  onPressed: () {
+                    // You can navigate to edit page here later
+                  },
                 ),
               ],
             ),
@@ -119,13 +138,13 @@ class _MedicalRecordCardState extends State<_MedicalRecordCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Medicine: ${r['medicine']}'),
-                  Text('Duration: ${r['duration']}'),
-                  Text('Hospital: ${r['hospital']}'),
-                  Text('Doctor: ${r['doctor']}'),
-                  Text('Notes: ${r['notes']}'),
-                  Text('Precautions: ${r['precautions']}'),
-                  Text('Avoid: ${r['avoid']}'),
+                  Text('Medicine: ${r['medicine'] ?? 'N/A'}'),
+                  Text('Duration: ${r['duration'] ?? 'N/A'}'),
+                  Text('Hospital: ${r['hospital'] ?? 'N/A'}'),
+                  Text('Doctor: ${r['doctor'] ?? 'N/A'}'),
+                  Text('Notes: ${r['notes'] ?? 'N/A'}'),
+                  Text('Precautions: ${r['precautions'] ?? 'N/A'}'),
+                  Text('Avoid: ${r['avoid'] ?? 'N/A'}'),
                 ],
               ),
             ),
@@ -133,4 +152,4 @@ class _MedicalRecordCardState extends State<_MedicalRecordCard> {
       ),
     );
   }
-} 
+}

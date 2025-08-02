@@ -17,13 +17,12 @@ class login extends StatefulWidget {
 class _loginState extends State<login> {
   TextEditingController userName = TextEditingController();
   TextEditingController password = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-
       home: Scaffold(
-        // backgroundColor: Color.fromRGBO(254, 254, 254, 100),
         resizeToAvoidBottomInset: true,
         body: SafeArea(
           child: ListView(
@@ -40,7 +39,7 @@ class _loginState extends State<login> {
                     forgotPass(),
                     Column(
                       children: [
-                        Padding(padding: EdgeInsetsGeometry.only(top: 30)),
+                        SizedBox(height: 30),
                         signinButton(userName, password),
                         googleButton(),
                         registerButton(context),
@@ -61,7 +60,6 @@ Widget appName() {
   return SizedBox(
     height: 100,
     width: 405,
-
     child: Center(
       child: Text(
         "MediCare",
@@ -82,7 +80,6 @@ Widget appName() {
 Widget sloganText() {
   return SizedBox(
     height: 70,
-
     child: Text(
       "MediCare welcomes you!",
       style: TextStyle(
@@ -98,20 +95,17 @@ Widget sloganText() {
 Widget loginCred(var userName, var password) {
   return SizedBox(
     height: 200,
-    // color: Colors.red[400],
     width: 405,
     child: Column(
       children: [
         Padding(
-          padding: EdgeInsetsGeometry.all(15),
+          padding: EdgeInsets.all(15),
           child: TextField(
             cursorHeight: 20,
             cursorColor: Theme_color,
             controller: userName,
-
             decoration: InputDecoration(
               labelText: "Mail/Phone",
-
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
                   color: const Color.fromARGB(102, 0, 0, 0),
@@ -119,7 +113,6 @@ Widget loginCred(var userName, var password) {
                 ),
                 borderRadius: BorderRadius.circular(15),
               ),
-
               disabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Colors.red, width: 2.0),
                 borderRadius: BorderRadius.circular(15),
@@ -128,15 +121,11 @@ Widget loginCred(var userName, var password) {
                 borderSide: BorderSide(color: Theme_color, width: 3.0),
                 borderRadius: BorderRadius.circular(15),
               ),
-
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
             ),
           ),
         ),
         Padding(
-          padding: EdgeInsetsGeometry.all(15),
+          padding: EdgeInsets.all(15),
           child: TextField(
             cursorHeight: 20,
             obscureText: true,
@@ -151,12 +140,10 @@ Widget loginCred(var userName, var password) {
                 ),
                 borderRadius: BorderRadius.circular(15),
               ),
-
               disabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Colors.red, width: 2.0),
                 borderRadius: BorderRadius.circular(15),
               ),
-
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Theme_color, width: 3.0),
                 borderRadius: BorderRadius.circular(15),
@@ -170,26 +157,19 @@ Widget loginCred(var userName, var password) {
 }
 
 Widget forgotPass() {
-  return Container(
-    // decoration: BoxDecoration(color: Colors.orangeAccent),
-    // width: 450,
-    // padding: EdgeInsets.only(left: 245),
-
-    // height: 40,
-    child: Padding(
-      padding: EdgeInsets.only(right: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text(
-            "Forgot password?",
-            style: TextStyle(
-              fontSize: 19,
-              color: const Color.fromARGB(255, 57, 57, 57),
-            ),
+  return Padding(
+    padding: EdgeInsets.only(right: 20),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          "Forgot password?",
+          style: TextStyle(
+            fontSize: 19,
+            color: const Color.fromARGB(255, 57, 57, 57),
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }
@@ -222,47 +202,49 @@ Widget signinButton(var f1, var f2) {
 
                 String uid = userCredential.user!.uid;
 
-                DocumentSnapshot userDoc = await FirebaseFirestore.instance
-                    .collection('users')
+                // First check in 'doctors' collection
+                DocumentSnapshot doctorDoc = await FirebaseFirestore.instance
+                    .collection('doctors')
                     .doc(uid)
                     .get();
 
-                if (userDoc.exists) {
-                  String role = userDoc['role'];
-
-                  if (role == 'doctor') {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DoctorStateContainer(),
-                      ),
-                      (Route<dynamic> route) => false,
-                    );
-                  } else if (role == 'patient') {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PatientMainNavigation(),
-                      ),
-                      (Route<dynamic> route) => false,
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Unknown role: $role")),
-                    );
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("User data not found")),
+                if (doctorDoc.exists) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DoctorStateContainer(),
+                    ),
+                    (Route<dynamic> route) => false,
                   );
+                  return;
                 }
+
+                // Then check in 'patients' collection
+                DocumentSnapshot patientDoc = await FirebaseFirestore.instance
+                    .collection('patients')
+                    .doc(uid)
+                    .get();
+
+                if (patientDoc.exists) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PatientMainNavigation(),
+                    ),
+                    (Route<dynamic> route) => false,
+                  );
+                  return;
+                }
+
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("User role not found")));
               } on FirebaseAuthException catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(e.message ?? "Login failed")),
                 );
               }
             },
-
             style: OutlinedButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -282,17 +264,15 @@ Widget signinButton(var f1, var f2) {
 
 Widget googleButton() {
   return Container(
-    // color: Colors.red[200],
     height: 70,
     padding: EdgeInsets.only(top: 20),
     child: SizedBox(
       width: 380,
       child: OutlinedButton.icon(
         onPressed: () {},
-
         style: OutlinedButton.styleFrom(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadiusGeometry.circular(15),
+            borderRadius: BorderRadius.circular(15),
           ),
         ),
         label: Row(
@@ -342,7 +322,6 @@ Widget registerButton(BuildContext context) {
           },
           child: Text(
             "Register",
-
             style: TextStyle(fontSize: 20, color: Theme_color),
           ),
         ),

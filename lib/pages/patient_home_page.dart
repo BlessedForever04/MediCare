@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class PatientHomePage extends StatefulWidget {
@@ -10,27 +11,10 @@ class PatientHomePage extends StatefulWidget {
 }
 
 class _PatientHomePageState extends State<PatientHomePage> {
-  List<Map<String, dynamic>> medicines = [
-    {
-      'name': 'Lisinopril 10mg',
-      'time': '8:00 AM',
-      'consumed': false,
-      'streak': 3,
-    },
-    {
-      'name': 'Metformin 500mg',
-      'time': '9:00 PM',
-      'consumed': false,
-      'streak': 5,
-    },
-  ];
-
-  void markConsumed(int index) {
-    setState(() {
-      medicines[index]['consumed'] = true;
-      medicines[index]['streak'] += 1;
-    });
-  }
+  String? userId;
+  String? patientId;
+  Map<String, dynamic>? patientData;
+  List<dynamic> medicineReminders = [];
 
   final List<String> healthTips = [
     'Drink plenty of water every day!',
@@ -41,192 +25,91 @@ class _PatientHomePageState extends State<PatientHomePage> {
     'Wash your hands regularly.',
     'Limit sugary drinks and snacks.',
   ];
-  
+
   String? todayTip;
-  bool showFullQR = false; // Toggle for QR code view
-  String? userId; // Firebase user ID
+  bool showFullQR = false;
 
   @override
   void initState() {
     super.initState();
     todayTip = (healthTips..shuffle()).first;
-    _fetchUserId();
+    fetchPatientData();
   }
 
-  // Fetch Firebase user ID
-  void _fetchUserId() {
+  Future<void> fetchPatientData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('patients')
+        .doc(uid)
+        .get();
+
+    if (doc.exists) {
+      final data = doc.data();
+      final healthInfo = data?['HealthInfo'] ?? {};
+      final history = List.from(healthInfo['History'] ?? []);
+      setState(() {
+        userId = uid;
+        patientId = data?['userid']?.toString() ?? 'N/A';
+        patientData = data;
+        medicineReminders = history;
+      });
+    }
+  }
+
+  Future<void> markConsumed(int index) async {
     setState(() {
-      userId = uid;
+      medicineReminders[index]['consumed'] = true;
+      medicineReminders[index]['streak'] =
+          (medicineReminders[index]['streak'] ?? 0) + 1;
     });
-  }
 
-  // Toggle between QR icon and actual QR code
-  void _toggleQRView() {
-    setState(() {
-      showFullQR = !showFullQR;
+    // Update Firestore
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    await FirebaseFirestore.instance.collection('patients').doc(uid).update({
+      'HealthInfo.History': medicineReminders,
     });
-  }
-
-  void _showMedicalHistoryDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Medical History & Documents'),
-        content: SizedBox(
-          width: 350,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('All Medical Records (Mock)'),
-              const SizedBox(height: 12),
-              ListTile(
-                leading: const Icon(Icons.description),
-                title: const Text('Blood Test Report'),
-                subtitle: const Text('2024-05-10'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.visibility),
-                  onPressed: () {},
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.description),
-                title: const Text('X-Ray Result'),
-                subtitle: const Text('2024-04-22'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.visibility),
-                  onPressed: () {},
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.description),
-                title: const Text('Prescription'),
-                subtitle: const Text('2024-06-01'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.visibility),
-                  onPressed: () {},
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAppointmentBookingDialog() {
-    final nameController = TextEditingController();
-    final dateController = TextEditingController();
-    final timeController = TextEditingController();
-    final reasonController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Book Appointment'),
-        content: SizedBox(
-          width: 350,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Doctor Name'),
-              ),
-              TextField(
-                controller: dateController,
-                decoration: const InputDecoration(
-                  labelText: 'Date (YYYY-MM-DD)',
-                ),
-              ),
-              TextField(
-                controller: timeController,
-                decoration: const InputDecoration(
-                  labelText: 'Time (e.g. 10:00 AM)',
-                ),
-              ),
-              TextField(
-                controller: reasonController,
-                decoration: const InputDecoration(labelText: 'Reason'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Appointment booked (mock)!')),
-              );
-            },
-            child: const Text('Book'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final patientId = userId ?? '22310183'; // Use Firebase ID if available
-    
+    if (patientData == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // QR + Info Card
             Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 4,
               color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    // QR Code Section with toggle functionality
                     InkWell(
-                      onTap: _toggleQRView,
+                      onTap: () => setState(() => showFullQR = !showFullQR),
                       child: Container(
                         width: 90,
                         height: 90,
                         decoration: BoxDecoration(
                           color: Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.blue.shade100,
-                            width: 2,
-                          ),
+                          border: Border.all(color: Colors.blue.shade100, width: 2),
                         ),
-                        child: showFullQR && userId != null
-                            ? Padding(
-                                padding: const EdgeInsets.all(4.0),
-                                child: QrImageView(
-                                  data: userId!,
-                                  version: QrVersions.auto,
-                                  size: 80,
-                                ),
-                              )
-                            : const Center(
-                                child: Icon(
-                                  Icons.qr_code,
-                                  size: 60,
-                                  color: Colors.blue,
-                                ),
-                              ),
+                        child: showFullQR
+                            ? QrImageView(data: patientId ?? 'N/A', size: 80)
+                            : const Icon(Icons.qr_code, size: 60, color: Colors.blue),
                       ),
                     ),
                     const SizedBox(width: 20),
@@ -234,25 +117,14 @@ class _PatientHomePageState extends State<PatientHomePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Patient ID: $patientId',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
+                          Text('Patient ID: $patientId', style: const TextStyle(fontWeight: FontWeight.bold)),
                           const SizedBox(height: 8),
                           ElevatedButton.icon(
-                            onPressed: _showMedicalHistoryDialog,
+                            onPressed: () {
+                              // You can implement your medical history modal or navigation here.
+                            },
                             icon: const Icon(Icons.folder_open),
                             label: const Text('View Medical History & Docs'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
                           ),
                         ],
                       ),
@@ -262,67 +134,17 @@ class _PatientHomePageState extends State<PatientHomePage> {
               ),
             ),
             const SizedBox(height: 20),
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 4,
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_today,
-                      color: Colors.deepPurple,
-                      size: 40,
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Book a Doctor Appointment',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          ElevatedButton.icon(
-                            onPressed: _showAppointmentBookingDialog,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Book Appointment'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+
+            // Health Tip Card
             Card(
               color: Colors.blue.shade50,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: ListTile(
                 leading: const Icon(Icons.tips_and_updates, color: Colors.blue),
                 title: const Text('Daily Health Tip'),
                 subtitle: Text(todayTip ?? ''),
                 trailing: IconButton(
                   icon: const Icon(Icons.refresh),
-                  tooltip: 'New Tip',
                   onPressed: () {
                     setState(() {
                       todayTip = (healthTips..shuffle()).first;
@@ -331,68 +153,31 @@ class _PatientHomePageState extends State<PatientHomePage> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Card(
-              color: Colors.orange.shade50,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 2,
-              child: ListTile(
-                leading: const Icon(Icons.emoji_events, color: Colors.orange),
-                title: const Text('Achievements'),
-                subtitle: const Text(
-                  'Medicine Streak: 5 days\nHealth Tips Read: 3',
+            const SizedBox(height: 20),
+
+            // Reminders
+            Text('Today\'s Reminders', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            ...medicineReminders.map((med) {
+              final index = medicineReminders.indexOf(med);
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  leading: Icon(Icons.medication, color: (med['consumed'] ?? false) ? Colors.green : Colors.red),
+                  title: Text(med['medicine'] ?? 'Unknown Medicine'),
+                  subtitle: Text(
+                    'Time: ${med['consumptionTime'] ?? 'N/A'}\n'
+                    'Streak: ${med['streak'] ?? 0} days',
+                  ),
+                  trailing: (med['consumed'] ?? false)
+                      ? const Icon(Icons.check, color: Colors.green)
+                      : ElevatedButton(
+                          onPressed: () => markConsumed(index),
+                          child: const Text('Mark Consumed'),
+                        ),
                 ),
-                trailing: const Icon(Icons.star, color: Colors.amber),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              color: Colors.purple.shade50,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 2,
-              child: ListTile(
-                leading: const Icon(Icons.format_quote, color: Colors.purple),
-                title: const Text('Motivation'),
-                subtitle: const Text('"The greatest wealth is health."'),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Today\'s Reminders',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            SizedBox(
-              height: medicines.length * 100,
-              child: ListView.builder(
-                itemCount: medicines.length,
-                itemBuilder: (context, index) {
-                  final med = medicines[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.medication,
-                        color: med['consumed'] ? Colors.green : Colors.red,
-                      ),
-                      title: Text(med['name']),
-                      subtitle: Text(
-                        'Time: ${med['time']}\nStreak: ${med['streak']} days',
-                      ),
-                      trailing: med['consumed']
-                          ? const Icon(Icons.check, color: Colors.green)
-                          : ElevatedButton(
-                              onPressed: () => markConsumed(index),
-                              child: const Text('Mark Consumed'),
-                            ),
-                    ),
-                  );
-                },
-              ),
-            ),
+              );
+            }).toList(),
           ],
         ),
       ),

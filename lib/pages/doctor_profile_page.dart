@@ -10,23 +10,37 @@ class DoctorProfilePage extends StatefulWidget {
 }
 
 class _DoctorProfilePageState extends State<DoctorProfilePage> {
-  String userName = "Loading";
+  String firstName = "Loading...";
+  String lastName = "";
+  String specialization = "";
+  String bio = "";
+  List<String> achievements = [];
+  List<String> specialties = [];
+
   @override
   void initState() {
     super.initState();
-    _fetchUserName();
+    _fetchDoctorInfo();
   }
 
-  void _fetchUserName() async {
+  Future<void> _fetchDoctorInfo() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      if (doc.exists) {
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('doctors')
+        .doc(uid)
+        .get();
+    if (doc.exists) {
+      final data = doc.data()?['UserInfo'];
+      if (data != null) {
         setState(() {
-          userName = doc.data()?['first_name'] ?? 'Loading..';
+          firstName = data['first_name'] ?? '';
+          lastName = data['last_name'] ?? '';
+          specialization = data['specialization'] ?? 'Specialist';
+          bio = data['bio'] ?? '';
+          achievements = List<String>.from(data['achievements'] ?? []);
+          specialties = List<String>.from(data['specialties'] ?? []);
         });
       }
     }
@@ -34,6 +48,8 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final fullName = "$firstName $lastName";
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -50,13 +66,13 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    userName,
+                    fullName,
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Text('Cardiologist'),
+                  Text(specialization),
                   Row(
                     children: List.generate(
                       5,
@@ -74,22 +90,19 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 8),
-          const Text(
-            '• Published 10+ research papers in cardiology\n• Winner of National Medical Award 2022\n• 15 years of experience',
-          ),
+          ...achievements.map((a) => Text('• $a')).toList(),
           const SizedBox(height: 24),
           const Text(
             'Specialties',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
+          const Text(
+            ''
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
-            children: const [
-              Chip(label: Text('Cardiology')),
-              Chip(label: Text('Hypertension')),
-              Chip(label: Text('Diabetes')),
-            ],
+            children: specialties.map((s) => Chip(label: Text(s))).toList(),
           ),
           const SizedBox(height: 24),
           const Text(
@@ -98,7 +111,9 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Dr. $userName is a renowned cardiologist with over 15 years of experience. He is passionate about patient care and medical research.',
+            bio.isNotEmpty
+                ? bio
+                : 'Dr. $fullName is a dedicated healthcare professional.',
           ),
         ],
       ),

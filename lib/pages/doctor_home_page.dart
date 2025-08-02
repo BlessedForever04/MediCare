@@ -136,7 +136,6 @@ class DoctorHomePage extends StatelessWidget {
         ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-           
             Row(
               children: [
                 ElevatedButton.icon(
@@ -153,7 +152,6 @@ class DoctorHomePage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
-          
             Row(
               children: [
                 _buildSummaryCard(
@@ -172,7 +170,6 @@ class DoctorHomePage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
-            
             Text(
               '${summaryData['appointments'].toString()} Upcoming Appointments',
               style: Theme.of(context).textTheme.headlineSmall,
@@ -253,7 +250,6 @@ class DoctorHomePage extends StatelessWidget {
               );
             }),
             const SizedBox(height: 24),
-           
             Text(
               'Active Patients',
               style: Theme.of(context).textTheme.headlineSmall,
@@ -321,7 +317,9 @@ class DoctorHomePage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => AddMedicalRecordPage(),
+                              builder: (context) => AddMedicalRecordPage(
+                                patientId: patient['userid'],
+                              ),
                             ),
                           );
                         },
@@ -337,11 +335,8 @@ class DoctorHomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-
-         
           ],
         ),
- 
         Positioned(
           bottom: 24,
           right: 24,
