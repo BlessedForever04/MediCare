@@ -202,7 +202,6 @@ Widget signinButton(var f1, var f2) {
 
                 String uid = userCredential.user!.uid;
 
-                // First check in 'doctors' collection
                 DocumentSnapshot doctorDoc = await FirebaseFirestore.instance
                     .collection('doctors')
                     .doc(uid)
@@ -219,7 +218,6 @@ Widget signinButton(var f1, var f2) {
                   return;
                 }
 
-                // Then check in 'patients' collection
                 DocumentSnapshot patientDoc = await FirebaseFirestore.instance
                     .collection('patients')
                     .doc(uid)

@@ -50,8 +50,6 @@ class _PatientMedicineReminderPageState
       medicineReminders[index]['streak'] =
           (medicineReminders[index]['streak'] ?? 0) + 1;
     });
-
-    // Update Firestore
     await FirebaseFirestore.instance.collection('patients').doc(uid).update({
       'HealthInfo.History': medicineReminders,
     });

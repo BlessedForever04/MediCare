@@ -78,7 +78,6 @@ class _notificationState extends State<notification> {
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
-                // Static notifications
                 if (notifications.isNotEmpty) ...[
                   const Padding(
                     padding: EdgeInsets.all(12.0),
@@ -106,7 +105,6 @@ class _notificationState extends State<notification> {
                   const Divider(height: 30),
                 ],
 
-                // Medicine Reminders
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12.0),
                   child: Text(

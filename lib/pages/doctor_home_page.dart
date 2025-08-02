@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'patient_details_page.dart';
 
-class DoctorHomePage extends StatelessWidget {
-  final List<Map<String, dynamic>> patients;
+class DoctorHomePage extends StatefulWidget {
+  final List<Map<String, dynamic>> patients; 
   final List<Map<String, dynamic>> appointments;
   final void Function(Map<String, dynamic>) addAppointment;
   final void Function(int) markAppointmentDone;
@@ -12,12 +12,25 @@ class DoctorHomePage extends StatelessWidget {
 
   const DoctorHomePage({
     super.key,
-    required this.patients,
+    required this.patients, 
     required this.appointments,
     required this.addAppointment,
     required this.markAppointmentDone,
     required this.deleteAppointment,
   });
+
+  @override
+  State<DoctorHomePage> createState() => _DoctorHomePageState();
+}
+
+class _DoctorHomePageState extends State<DoctorHomePage> {
+  late List<Map<String, dynamic>> patients;
+
+  @override
+  void initState() {
+    super.initState();
+    patients = widget.patients; 
+  }
 
   void _showQRScanner(BuildContext context) {
     showDialog(
@@ -49,13 +62,14 @@ class DoctorHomePage extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      PatientDetailsPage(patient: patients[0]),
-                ),
-              );
+              if (patients.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PatientDetailsPage(patient: patients[0]),
+                  ),
+                );
+              }
             },
             child: const Text('Simulate Scan'),
           ),
@@ -138,7 +152,7 @@ class DoctorHomePage extends StatelessWidget {
                   'done': false,
                 };
 
-                addAppointment(newAppointment);
+                widget.addAppointment(newAppointment);
 
                 final doctorUid = FirebaseAuth.instance.currentUser?.uid;
                 if (doctorUid != null) {
@@ -168,7 +182,7 @@ class DoctorHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summaryData = {
-      'appointments': appointments.where((a) => !a['done']).length,
+      'appointments': widget.appointments.where((a) => !a['done']).length,
       'active_patients': patients.length,
     };
 
@@ -210,35 +224,37 @@ class DoctorHomePage extends StatelessWidget {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 12),
-            ...appointments.asMap().entries.where((e) => !e.value['done']).map((
-              entry,
-            ) {
-              final appt = entry.value;
-              final idx = entry.key;
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(child: Text(appt['avatar'])),
-                  title: Text(appt['patient']),
-                  subtitle: Text(
-                    '${appt['date']} at ${appt['time']}\n${appt['reason']}',
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => markAppointmentDone(idx),
-                        child: const Text('Done'),
+            ...widget.appointments
+                .asMap()
+                .entries
+                .where((e) => !e.value['done'])
+                .map((entry) {
+                  final appt = entry.value;
+                  final idx = entry.key;
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      leading: CircleAvatar(child: Text(appt['avatar'])),
+                      title: Text(appt['patient']),
+                      subtitle: Text(
+                        '${appt['date']} at ${appt['time']}\n${appt['reason']}',
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => deleteAppointment(idx),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () => widget.markAppointmentDone(idx),
+                            child: const Text('Done'),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => widget.deleteAppointment(idx),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              );
-            }),
+                    ),
+                  );
+                }),
             const SizedBox(height: 24),
             Text(
               'Active Patients',
@@ -267,6 +283,14 @@ class DoctorHomePage extends StatelessWidget {
                       ),
                     ],
                   ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PatientDetailsPage(patient: patient),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

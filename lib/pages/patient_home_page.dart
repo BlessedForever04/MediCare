@@ -65,7 +65,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
           (medicineReminders[index]['streak'] ?? 0) + 1;
     });
 
-    // Update Firestore
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -88,7 +87,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // QR + Info Card
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 4,
@@ -121,7 +119,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
                           const SizedBox(height: 8),
                           ElevatedButton.icon(
                             onPressed: () {
-                              // You can implement your medical history modal or navigation here.
                             },
                             icon: const Icon(Icons.folder_open),
                             label: const Text('View Medical History & Docs'),
@@ -135,7 +132,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
             ),
             const SizedBox(height: 20),
 
-            // Health Tip Card
             Card(
               color: Colors.blue.shade50,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -155,7 +151,6 @@ class _PatientHomePageState extends State<PatientHomePage> {
             ),
             const SizedBox(height: 20),
 
-            // Reminders
             Text('Today\'s Reminders', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             ...medicineReminders.map((med) {

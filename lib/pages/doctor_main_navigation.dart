@@ -37,13 +37,11 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
       final data = docSnap.data()!;
       final details = data['PatientDetails'] ?? {};
 
-      // Fetch appointments
       final rawAppointments = List<Map<String, dynamic>>.from(
         details['PatientAppointments'] ?? [],
       );
       appointments = rawAppointments;
 
-      // Fetch patient UIDs and get full patient documents
       final patientUIDs = List<String>.from(details['ActivePatients'] ?? []);
       patients = [];
 
@@ -61,6 +59,19 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
           patientData['HealthInfo'] ??= {};
           patientData['HealthInfo']['currentHealthStatus'] =
               patientData['HealthInfo']['currentHealthStatus'] ?? 'Unknown';
+          patientData['avatar'] = (patientData['first_name'] ?? '?')
+              .toString()
+              .substring(0, 1);
+          patientData['name'] =
+              '${patientData['first_name'] ?? ''} ${patientData['last_name'] ?? ''}';
+          patientData['condition'] =
+              patientData['HealthInfo']['currentHealthStatus'];
+          patientData['status'] = 'Ongoing';
+          patientData['lastRecord'] =
+              (patientData['HealthInfo']['History']?.isNotEmpty ?? false)
+              ? patientData['HealthInfo']['History'].last['diagnosisDate']
+              : 'N/A';
+          patientData['compliance'] = true;
           patients.add(patientData);
         }
       }
@@ -109,13 +120,25 @@ class _DoctorStateContainerState extends State<DoctorStateContainer> {
   void addPatient(Map<String, dynamic> newPatient) async {
     newPatient['id'] = newPatient['id'] ?? newPatient['userid'] ?? '';
     newPatient['userid'] = newPatient['userid'] ?? newPatient['id'] ?? '';
+    newPatient['avatar'] = (newPatient['first_name'] ?? '?')
+        .toString()
+        .substring(0, 1);
+    newPatient['name'] =
+        '${newPatient['first_name'] ?? ''} ${newPatient['last_name'] ?? ''}';
+    newPatient['condition'] =
+        newPatient['HealthInfo']?['currentHealthStatus'] ?? 'Unknown';
+    newPatient['status'] = 'Ongoing';
+    newPatient['lastRecord'] =
+        (newPatient['HealthInfo']?['History']?.isNotEmpty ?? false)
+        ? newPatient['HealthInfo']['History'].last['diagnosisDate']
+        : 'N/A';
+    newPatient['compliance'] = true; 
     patients.add(newPatient);
     setState(() {});
 
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       final updatedUids = patients.map((p) => p['id']).toList();
-
       await FirebaseFirestore.instance.collection('doctors').doc(uid).update({
         'PatientDetails.ActivePatients': updatedUids,
       });

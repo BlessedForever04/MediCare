@@ -20,7 +20,7 @@ void main() async {
       ),
     );
   } else {
-    await Firebase.initializeApp(); // For Android/iOS (uses firebase_options.dart if generated)
+    await Firebase.initializeApp();
   }
 
   runApp(const MyApp());
@@ -40,7 +40,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: splash(), // Or Splash(), based on logic
+      home: splash(),
     );
   }
 }

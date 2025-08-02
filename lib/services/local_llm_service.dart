@@ -25,7 +25,7 @@ class LocalLLMService {
         throw Exception("LLM API failed: ${response.body}");
       }
     } catch (e) {
-      return '⚠️ Failed to connect to LLM: $e';
+      return 'Failed to connect to LLM: $e';
     }
   }
 }

@@ -86,7 +86,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
             MaterialPageRoute(
               builder: (context) => AddMedicalRecordPage(patientId: patientId),
             ),
-          ).then((_) => _fetchMedicalHistory()); // Refresh after return
+          ).then((_) => _fetchMedicalHistory());
         },
         icon: const Icon(Icons.add),
         label: const Text('Add Record'),
@@ -130,7 +130,6 @@ class _MedicalRecordCardState extends State<_MedicalRecordCard> {
                 IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () {
-                    // You can implement editing feature later
                   },
                 ),
               ],
