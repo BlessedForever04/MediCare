@@ -114,7 +114,7 @@ class _DoctorPatientsPageState extends State<DoctorPatientsPage> {
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ListTile(
                 title: Text(patient['first_name'] ?? 'Unnamed'),
-                subtitle: Text('ID: ${patient['id'] ?? 'Unknown'}'),
+                subtitle: Text('ID: ${patient['userid'] ?? 'Unknown'}'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
                   Navigator.push(

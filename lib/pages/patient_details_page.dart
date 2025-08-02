@@ -22,14 +22,14 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
 
   Future<void> _fetchMedicalHistory() async {
     final patientId = widget.patient['userid'] ?? widget.patient['id'];
-
     final doc = await FirebaseFirestore.instance
         .collection('patients')
         .doc(patientId)
         .get();
 
     if (doc.exists) {
-      final history = doc.data()?['HealthInfo']?['History'] ?? [];
+      final data = doc.data();
+      final history = data?['HealthInfo']?['History'] ?? [];
       setState(() {
         records = List<Map<String, dynamic>>.from(history);
       });
@@ -38,8 +38,10 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final patientName =
-        '${widget.patient['first_name'] ?? ''} ${widget.patient['last_name'] ?? ''}';
+    final firstName =
+        widget.patient['first_name'] ?? widget.patient['name'] ?? '';
+    final lastName = widget.patient['last_name'] ?? '';
+    final patientName = '$firstName $lastName'.trim();
     final patientId = widget.patient['userid'] ?? widget.patient['id'];
 
     return Scaffold(
@@ -84,7 +86,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
             MaterialPageRoute(
               builder: (context) => AddMedicalRecordPage(patientId: patientId),
             ),
-          ).then((_) => _fetchMedicalHistory()); // Refresh after adding
+          ).then((_) => _fetchMedicalHistory()); // Refresh after return
         },
         icon: const Icon(Icons.add),
         label: const Text('Add Record'),
@@ -95,6 +97,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
 
 class _MedicalRecordCard extends StatefulWidget {
   final Map<String, dynamic> record;
+
   const _MedicalRecordCard({required this.record});
 
   @override
@@ -107,6 +110,7 @@ class _MedicalRecordCardState extends State<_MedicalRecordCard> {
   @override
   Widget build(BuildContext context) {
     final r = widget.record;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -126,7 +130,7 @@ class _MedicalRecordCardState extends State<_MedicalRecordCard> {
                 IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () {
-                    // You can navigate to edit page here later
+                    // You can implement editing feature later
                   },
                 ),
               ],

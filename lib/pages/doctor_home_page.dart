@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'add_medical_record_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'patient_details_page.dart';
 
 class DoctorHomePage extends StatelessWidget {
@@ -64,10 +65,12 @@ class DoctorHomePage extends StatelessWidget {
   }
 
   void _showAddAppointmentDialog(BuildContext context) {
-    final patientController = TextEditingController();
-    final dateController = TextEditingController();
-    final timeController = TextEditingController();
+    final patientNameController = TextEditingController();
+    final patientIdController = TextEditingController();
     final reasonController = TextEditingController();
+    DateTime? selectedDate;
+    TimeOfDay? selectedTime;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -77,20 +80,35 @@ class DoctorHomePage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: patientController,
+                controller: patientNameController,
                 decoration: const InputDecoration(labelText: 'Patient Name'),
               ),
               TextField(
-                controller: dateController,
-                decoration: const InputDecoration(
-                  labelText: 'Date (YYYY-MM-DD)',
-                ),
+                controller: patientIdController,
+                decoration: const InputDecoration(labelText: 'Patient UID'),
               ),
-              TextField(
-                controller: timeController,
-                decoration: const InputDecoration(
-                  labelText: 'Time (e.g. 10:00 AM)',
-                ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () async {
+                  final pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime(2101),
+                  );
+                  if (pickedDate != null) selectedDate = pickedDate;
+                },
+                child: const Text('Pick Appointment Date'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final pickedTime = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
+                  if (pickedTime != null) selectedTime = pickedTime;
+                },
+                child: const Text('Pick Appointment Time'),
               ),
               TextField(
                 controller: reasonController,
@@ -105,18 +123,40 @@ class DoctorHomePage extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              addAppointment({
-                'patient': patientController.text,
-                'avatar': patientController.text.isNotEmpty
-                    ? patientController.text[0]
-                    : '?',
-                'date': dateController.text,
-                'time': timeController.text,
-                'reason': reasonController.text,
-                'done': false,
-              });
-              Navigator.pop(context);
+            onPressed: () async {
+              if (selectedDate != null && selectedTime != null) {
+                final newAppointment = {
+                  'patient': patientNameController.text,
+                  'avatar': patientNameController.text.isNotEmpty
+                      ? patientNameController.text[0]
+                      : '?',
+                  'patientId': patientIdController.text,
+                  'reason': reasonController.text,
+                  'date':
+                      '${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}',
+                  'time': selectedTime!.format(context),
+                  'done': false,
+                };
+
+                addAppointment(newAppointment);
+
+                final doctorUid = FirebaseAuth.instance.currentUser?.uid;
+                if (doctorUid != null) {
+                  await FirebaseFirestore.instance
+                      .collection('doctors')
+                      .doc(doctorUid)
+                      .collection('PatientAppointments')
+                      .add(newAppointment);
+                }
+
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please pick both date and time'),
+                  ),
+                );
+              }
             },
             child: const Text('Add'),
           ),
@@ -131,6 +171,7 @@ class DoctorHomePage extends StatelessWidget {
       'appointments': appointments.where((a) => !a['done']).length,
       'active_patients': patients.length,
     };
+
     return Stack(
       children: [
         ListView(
@@ -142,12 +183,6 @@ class DoctorHomePage extends StatelessWidget {
                   onPressed: () => _showQRScanner(context),
                   icon: const Icon(Icons.qr_code_scanner),
                   label: const Text('Scan Patient QR'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -171,7 +206,7 @@ class DoctorHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              '${summaryData['appointments'].toString()} Upcoming Appointments',
+              '${summaryData['appointments']} Upcoming Appointments',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 12),
@@ -182,67 +217,22 @@ class DoctorHomePage extends StatelessWidget {
               final idx = entry.key;
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: ListTile(
+                  leading: CircleAvatar(child: Text(appt['avatar'])),
+                  title: Text(appt['patient']),
+                  subtitle: Text(
+                    '${appt['date']} at ${appt['time']}\n${appt['reason']}',
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircleAvatar(child: Text(appt['avatar'] as String)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              appt['patient'] as String,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(appt['reason'] as String),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(appt['date'] as String),
-                                    Text(
-                                      appt['time'] as String,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    ElevatedButton(
-                                      onPressed: () => markAppointmentDone(idx),
-                                      style: ElevatedButton.styleFrom(
-                                        minimumSize: const Size(80, 32),
-                                        padding: EdgeInsets.zero,
-                                      ),
-                                      child: const Text('Mark Done'),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed: () => deleteAppointment(idx),
-                                      tooltip: 'Delete Appointment',
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      ElevatedButton(
+                        onPressed: () => markAppointmentDone(idx),
+                        child: const Text('Done'),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => deleteAppointment(idx),
                       ),
                     ],
                   ),
@@ -258,76 +248,22 @@ class DoctorHomePage extends StatelessWidget {
             ...patients.map(
               (patient) => Card(
                 margin: const EdgeInsets.only(bottom: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: (patient['compliance'] ?? false)
+                        ? Colors.green
+                        : Colors.red,
+                    child: Text(patient['avatar'] ?? '?'),
+                  ),
+                  title: Text(patient['name']),
+                  subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        backgroundColor: (patient['compliance'] as bool)
-                            ? Colors.green
-                            : Colors.red,
-                        child: Text(
-                          patient['avatar'] as String,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              patient['name'] as String,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Condition: ${patient['condition'] as String}',
-                            ),
-                            Text('Status: ${patient['status'] as String}'),
-                            Text(
-                              'Last Record: ${patient['lastRecord'] as String}',
-                            ),
-                            Row(
-                              children: [
-                                const Text('Medicine Compliance: '),
-                                (patient['compliance'] as bool)
-                                    ? const Icon(
-                                        Icons.check_circle,
-                                        color: Colors.green,
-                                        size: 18,
-                                      )
-                                    : const Icon(
-                                        Icons.cancel,
-                                        color: Colors.red,
-                                        size: 18,
-                                      ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddMedicalRecordPage(
-                                patientId: patient['userid'],
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(80, 32),
-                          padding: EdgeInsets.zero,
-                        ),
-                        child: const Text('Assign Medicine'),
+                      Text('Condition: ${patient['condition']}'),
+                      Text('Status: ${patient['status']}'),
+                      Text('Last Record: ${patient['lastRecord']}'),
+                      Text(
+                        'Compliance: ${(patient['compliance'] ?? false) ? "Yes" : "No"}',
                       ),
                     ],
                   ),
@@ -342,7 +278,6 @@ class DoctorHomePage extends StatelessWidget {
           right: 24,
           child: FloatingActionButton(
             onPressed: () => _showAddAppointmentDialog(context),
-            tooltip: 'Add Appointment',
             child: const Icon(Icons.add),
           ),
         ),
@@ -364,7 +299,7 @@ class DoctorHomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 32, color: color),
+              Icon(icon, color: color, size: 28),
               const SizedBox(height: 8),
               Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
               Text(

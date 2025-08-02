@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class DoctorDrawer extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onSelect;
+
   const DoctorDrawer({
     super.key,
     required this.selectedIndex,
@@ -15,27 +16,34 @@ class DoctorDrawer extends StatefulWidget {
   State<DoctorDrawer> createState() => _DoctorDrawerState();
 }
 
-String userName = "Loading";
-
 class _DoctorDrawerState extends State<DoctorDrawer> {
+  String userName = "Doctor";
+
   @override
   void initState() {
     super.initState();
     _fetchUserName();
   }
 
-  void _fetchUserName() async {
+  Future<void> _fetchUserName() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
-      final doc = await FirebaseFirestore.instance
+      final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .get();
-      if (doc.exists) {
+      if (userDoc.exists) {
         setState(() {
-          userName = doc.data()?['first_name'] ?? 'Loading..';
+          userName = userDoc.data()?['first_name'] ?? "Doctor";
         });
       }
+    }
+  }
+
+  void _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    if (context.mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 
@@ -52,64 +60,49 @@ class _DoctorDrawerState extends State<DoctorDrawer> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.white,
                   child: Icon(Icons.person, size: 40),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text(
-                  "Dr. $userName",
+                  'Dr. $userName',
                   style: const TextStyle(
                     fontSize: 22,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text('Cardiologist', style: TextStyle(color: Colors.white70)),
+                const Text(
+                  'Cardiologist',
+                  style: TextStyle(color: Colors.white70),
+                ),
               ],
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.dashboard),
-            title: const Text('Dashboard'),
-            selected: widget.selectedIndex == 0,
-            onTap: () => widget.onSelect(0),
-          ),
-          ListTile(
-            leading: const Icon(Icons.people),
-            title: const Text('Patients'),
-            selected: widget.selectedIndex == 1,
-            onTap: () => widget.onSelect(1),
-          ),
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Profile'),
-            selected: widget.selectedIndex == 2,
-            onTap: () => widget.onSelect(2),
-          ),
-          ListTile(
-            leading: const Icon(Icons.assistant),
-            title: const Text('AI Assistant'),
-            selected: widget.selectedIndex == 3,
-            onTap: () => widget.onSelect(3),
-          ),
+          _buildDrawerItem(Icons.dashboard, 'Dashboard', 0),
+          _buildDrawerItem(Icons.people, 'Patients', 1),
+          _buildDrawerItem(Icons.person, 'Profile', 2),
+          _buildDrawerItem(Icons.assistant, 'AI Assistant', 3),
           const Divider(),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
-            selected: widget.selectedIndex == 4,
-            onTap: () => widget.onSelect(4),
-          ),
+          _buildDrawerItem(Icons.settings, 'Settings', 4),
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
-            onTap: () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
+            onTap: () => _logout(context),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDrawerItem(IconData icon, String title, int index) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      selected: widget.selectedIndex == index,
+      onTap: () => widget.onSelect(index),
     );
   }
 }
