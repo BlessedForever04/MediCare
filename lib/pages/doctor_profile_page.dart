@@ -90,7 +90,7 @@ class _DoctorProfilePageState extends State<DoctorProfilePage> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 8),
-          ...achievements.map((a) => Text('• $a')).toList(),
+          ...achievements.map((a) => Text('• $a')),
           const SizedBox(height: 24),
           const Text(
             'Specialties',

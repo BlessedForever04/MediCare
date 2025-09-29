@@ -14,7 +14,7 @@ class _splashState extends State<splash> {
   @override
   void initState() {
     super.initState();
-
+    
     Timer(Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,

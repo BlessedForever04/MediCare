@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../services/database_service.dart';
+import '../services/local_llm_service.dart';
+
+class ChatMessage {
+  final String role;
+  final String text;
+  ChatMessage({required this.role, required this.text});
+}
 
 class PatientAIAssistantPage extends StatefulWidget {
   const PatientAIAssistantPage({super.key});
@@ -10,6 +16,13 @@ class PatientAIAssistantPage extends StatefulWidget {
 }
 
 class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
+  final DatabaseService _dbService = DatabaseService();
+  final LocalLLMService _llmService = LocalLLMService();
+  final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  bool _isLoading = false;
+
   final List<String> suggestions = [
     'Monitor your blood pressure daily.',
     'Reduce salt intake to help manage hypertension.',
@@ -19,44 +32,17 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
     'Stay hydrated and avoid sugary drinks.',
   ];
 
-  final List<Map<String, String>> chat = [
-    {'role': 'user', 'text': 'What should I do for high blood pressure?'},
-    {
-      'role': 'ai',
-      'text': 'Monitor your blood pressure daily and reduce salt intake.',
-    },
-    {'role': 'user', 'text': 'How can I improve my diabetes?'},
-    {
-      'role': 'ai',
-      'text': 'Exercise regularly and take your medicines on time.',
-    },
-  ];
+  final List<ChatMessage> chat = [];
 
-  final TextEditingController _controller = TextEditingController();
-  bool _isLoading = false;
-
-  Future<String> _getLLMResponse(String prompt) async {
-    final url = Uri.parse('http://10.0.2.2:11434/api/generate');
-
-    final headers = {'Content-Type': 'application/json'};
-    final body = jsonEncode({
-      'model': 'mistral',
-      'prompt': prompt,
-      'stream': false,
-    });
-
-    try {
-      final response = await http.post(url, headers: headers, body: body);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['response'].toString().trim();
-      } else {
-        return 'AI Error: ${response.statusCode}';
+  @override
+  void initState() {
+    super.initState();
+    _dbService.getMedicalHistory().then((records) {
+      if (records.isEmpty) {
+        _dbService.insertDisease("Hypertension");
+        _dbService.insertDisease("Diabetes");
       }
-    } catch (e) {
-      return 'Failed to connect to AI: $e';
-    }
+    });
   }
 
   void _sendMessage() async {
@@ -64,22 +50,42 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
     if (userMessage.isEmpty) return;
 
     setState(() {
-      chat.add({'role': 'user', 'text': userMessage});
+      chat.add(ChatMessage(role: 'user', text: userMessage));
       _isLoading = true;
       _controller.clear();
     });
 
-    final aiResponse = await _getLLMResponse(userMessage);
+    // Fetch medical history
+    final historyRecords = await _dbService.getMedicalHistory();
+    final history = historyRecords.isEmpty
+        ? "No past records."
+        : historyRecords.map((r) => r['name']).join(", ");
+
+    // Construct prompt
+    final prompt =
+        "You are a medical assistant.\nThe patient has the following medical history: $history\nAnswer their question carefully:\n$userMessage";
+
+    // Call Ollama LLM
+    final aiResponse = await _llmService.getLLMResponse(prompt);
 
     setState(() {
-      chat.add({'role': 'ai', 'text': aiResponse});
+      chat.add(ChatMessage(role: 'ai', text: aiResponse));
       _isLoading = false;
     });
+
+    // Scroll to bottom
+    await Future.delayed(const Duration(milliseconds: 100));
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text("Patient AI Assistant")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -123,10 +129,11 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
             const SizedBox(height: 24),
             Expanded(
               child: ListView.builder(
+                controller: _scrollController,
                 itemCount: chat.length,
                 itemBuilder: (context, i) {
                   final msg = chat[i];
-                  final isUser = msg['role'] == 'user';
+                  final isUser = msg.role == 'user';
                   return Align(
                     alignment: isUser
                         ? Alignment.centerRight
@@ -145,7 +152,7 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: Text(
-                          msg['text'] ?? '',
+                          msg.text,
                           style: TextStyle(
                             color: isUser
                                 ? Colors.blue.shade900

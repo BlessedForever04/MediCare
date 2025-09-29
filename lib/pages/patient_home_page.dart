@@ -172,7 +172,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
                         ),
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

@@ -167,7 +167,7 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
                           'Medicine: ${record['medicine'] ?? 'N/A'}',
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),
