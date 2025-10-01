@@ -2,18 +2,22 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class LocalLLMService {
-  final String _url = 'http://10.0.2.2:11434/api/generate'; // emulator localhost
+  final String _url =
+      'http://10.0.2.2:11434/api/generate'; // emulator localhost
 
   Future<String> getLLMResponse(String prompt) async {
     try {
       final response = await http.post(
         Uri.parse(_url),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({"model": "mistral", "prompt": prompt}),
+        body: jsonEncode({
+          "model": "mistral",
+          "prompt": prompt,
+          "stream": true,
+        }),
       );
 
       if (response.statusCode == 200) {
-        // Split streamed response by lines
         final lines = response.body.split('\n');
         String combined = '';
 

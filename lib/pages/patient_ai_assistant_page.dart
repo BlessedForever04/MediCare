@@ -3,7 +3,7 @@ import '../services/database_service.dart';
 import '../services/local_llm_service.dart';
 
 class ChatMessage {
-  final String role;
+  final String role; // 'user' or 'ai'
   final String text;
   ChatMessage({required this.role, required this.text});
 }
@@ -45,13 +45,13 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
     });
   }
 
-  void _sendMessage() async {
+  Future<void> _sendMessage() async {
     final userMessage = _controller.text.trim();
     if (userMessage.isEmpty) return;
 
     setState(() {
       chat.add(ChatMessage(role: 'user', text: userMessage));
-      _isLoading = true;
+      _isLoading = false;
       _controller.clear();
     });
 
@@ -63,9 +63,14 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
 
     // Construct prompt
     final prompt =
-        "You are a medical assistant.\nThe patient has the following medical history: $history\nAnswer their question carefully:\n$userMessage";
+        """
+You are a medical assistant.
+The patient has the following medical history: $history
+Answer their question carefully and clearly:
+$userMessage
+""";
 
-    // Call Ollama LLM
+    // Get AI response from Ollama
     final aiResponse = await _llmService.getLLMResponse(prompt);
 
     setState(() {
@@ -74,124 +79,135 @@ class _PatientAIAssistantPageState extends State<PatientAIAssistantPage> {
     });
 
     // Scroll to bottom
-    await Future.delayed(const Duration(milliseconds: 100));
-    _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Patient AI Assistant")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 2,
-              color: Colors.blue.shade50,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'AI Suggestions',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    ...suggestions.map(
-                      (s) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.psychology,
-                              color: Colors.blue,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(s)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              // Suggestions Card
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: chat.length,
-                itemBuilder: (context, i) {
-                  final msg = chat[i];
-                  final isUser = msg.role == 'user';
-                  return Align(
-                    alignment: isUser
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
-                    child: Card(
-                      color: isUser
-                          ? Colors.blue.shade100
-                          : Colors.grey.shade200,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                elevation: 2,
+                color: Colors.blue.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'AI Suggestions',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      margin: const EdgeInsets.symmetric(
-                        vertical: 4,
-                        horizontal: 8,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Text(
-                          msg.text,
-                          style: TextStyle(
-                            color: isUser
-                                ? Colors.blue.shade900
-                                : Colors.black87,
+                      const SizedBox(height: 8),
+                      ...suggestions.map(
+                        (s) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.psychology,
+                                color: Colors.blue,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(s)),
+                            ],
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    ],
+                  ),
+                ),
               ),
-            ),
-            if (_isLoading) const CircularProgressIndicator(),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Ask a health question...',
-                      border: OutlineInputBorder(),
+              const SizedBox(height: 24),
+
+              // Chat messages
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: chat.length,
+                  itemBuilder: (context, i) {
+                    final msg = chat[i];
+                    final isUser = msg.role == 'user';
+                    return Align(
+                      alignment: isUser
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Card(
+                        color: isUser
+                            ? Colors.blue.shade100
+                            : Colors.grey.shade200,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: 8,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Text(
+                            msg.text,
+                            style: TextStyle(
+                              color: isUser
+                                  ? Colors.blue.shade900
+                                  : Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              if (_isLoading) const CircularProgressIndicator(),
+
+              // Input & Send
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        hintText: 'Ask a health question...',
+                        border: OutlineInputBorder(),
+                      ),
+                      onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _sendMessage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _sendMessage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
+                    child: const Icon(Icons.send),
                   ),
-                  child: const Icon(Icons.send),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
